@@ -1,0 +1,95 @@
+spring:
+  application:
+    name: spring-boot-demo
+
+  profiles:
+    active: local
+
+tmdb:
+  api:
+    base-url: https://api.themoviedb.org/3
+    key: ${TMDB_API_KEY:YOUR_TMDB_API_KEY_HERE}
+
+kobis:
+  api:
+    base-url: http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice
+    key: ${KOBIS_API_KEY:YOUR_KOBIS_API_KEY_HERE}
+
+jwt:
+  secret: ${JWT_SECRET:YOUR_SECURE_JWT_SECRET_KEY_HERE_MINIMUM_32_BYTES}
+  expiration-ms: 86400000
+
+---
+# ----------------------------------------------------
+# Local Environment (H2 In-Memory DB)
+# ----------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:file:./data/cineflix_db;MODE=MySQL;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+---
+# ----------------------------------------------------
+# MySQL Environment Profile
+# ----------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: mysql
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mydb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: your_password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+---
+# ----------------------------------------------------
+# PostgreSQL Environment Profile
+# ----------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: postgres
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/mydb
+    username: postgres
+    password: your_password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true

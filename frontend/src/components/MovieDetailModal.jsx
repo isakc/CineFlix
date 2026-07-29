@@ -1,0 +1,201 @@
+import React, { useState, useEffect } from 'react';
+
+export default function MovieDetailModal({ movie, user, onClose }) {
+  const [reviews, setReviews] = useState([]);
+  const [ratingSummary, setRatingSummary] = useState({ averageRating: 0, totalReviewCount: 0 });
+  const [author, setAuthor] = useState(user ? user.nickname : '');
+  const [rating, setRating] = useState(5.0);
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const posterUrl = movie.poster_path
+    ? (movie.poster_path.startsWith('http') ? movie.poster_path : `https://image.tmdb.org/t/p/w500${movie.poster_path}`)
+    : 'https://via.placeholder.com/500x750?text=No+Poster';
+
+  useEffect(() => {
+    if (user) setAuthor(user.nickname);
+  }, [user]);
+
+  useEffect(() => {
+    if (movie) {
+      fetchReviews();
+      fetchRatingSummary();
+    }
+  }, [movie]);
+
+  const fetchReviews = async () => {
+    try {
+      const res = await fetch(`/api/movies/${movie.id}/reviews`);
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(data.content || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err);
+    }
+  };
+
+  const fetchRatingSummary = async () => {
+    try {
+      const res = await fetch(`/api/movies/${movie.id}/rating-summary`);
+      if (res.ok) {
+        const data = await res.json();
+        setRatingSummary(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch rating summary:', err);
+    }
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!author.trim() || !content.trim()) return;
+
+    setLoading(true);
+    const headers = { 'Content-Type': 'application/json' };
+    if (user && user.token) {
+      headers['Authorization'] = `Bearer ${user.token}`;
+    }
+
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          tmdbMovieId: movie.id,
+          author,
+          rating: parseFloat(rating),
+          content
+        })
+      });
+
+      if (res.ok) {
+        if (!user) setAuthor('');
+        setContent('');
+        setRating(5.0);
+        fetchReviews();
+        fetchRatingSummary();
+      }
+    } catch (err) {
+      console.error('Failed to submit review:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card glass" onClick={(e) => e.stopPropagation()}>
+        <button className="btn-close" onClick={onClose}>×</button>
+
+        <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
+          <img
+            src={posterUrl}
+            alt={movie.title}
+            style={{ width: '220px', borderRadius: '16px', objectFit: 'cover' }}
+          />
+
+          <div style={{ flex: '1', minWidth: '280px' }}>
+            <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '10px' }}>{movie.title}</h2>
+            <div style={{ display: 'flex', gap: '15px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              <span>개봉일: {movie.release_date || '미상'}</span>
+              <span>TMDB 평점: ★ {movie.vote_average ? movie.vote_average.toFixed(1) : '0.0'}</span>
+            </div>
+
+            <div style={{
+              background: 'rgba(255, 193, 7, 0.1)',
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              padding: '12px 18px',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <span style={{ fontSize: '1.5rem', color: 'var(--accent-gold)' }}>★ {ratingSummary.averageRating}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                커뮤니티 유저 평점 ({ratingSummary.totalReviewCount}개의 리뷰)
+              </span>
+            </div>
+
+            <p style={{ lineHeight: '1.7', color: '#D1D5DB', marginBottom: '24px' }}>
+              {movie.overview || '줄거리 정보가 없습니다.'}
+            </p>
+          </div>
+        </div>
+
+        <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '30px 0' }} />
+
+        <div className="review-box">
+          <h3 style={{ marginBottom: '16px', fontSize: '1.2rem', fontWeight: '700' }}>✍️ 리뷰 & 별점 남기기</h3>
+          <form className="review-form" onSubmit={handleSubmitReview}>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <input
+                type="text"
+                placeholder="작성자 닉네임"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                readOnly={!!user}
+                style={{ flex: 1, opacity: user ? 0.8 : 1 }}
+                required
+              />
+              <select
+                value={rating}
+                onChange={(e) => setRating(e.target.value)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-color)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  padding: '0 16px',
+                  fontFamily: 'inherit'
+                }}
+              >
+                <option value="5.0" style={{ background: '#13151E' }}>★★★★★ 5.0 (최고예요)</option>
+                <option value="4.0" style={{ background: '#13151E' }}>★★★★☆ 4.0 (재밌어요)</option>
+                <option value="3.0" style={{ background: '#13151E' }}>★★★☆☆ 3.0 (보통이에요)</option>
+                <option value="2.0" style={{ background: '#13151E' }}>★★☆☆☆ 2.0 (아쉬워요)</option>
+                <option value="1.0" style={{ background: '#13151E' }}>★☆☆☆☆ 1.0 (별로예요)</option>
+              </select>
+            </div>
+            <textarea
+              placeholder="영화에 대한 감상평을 자유롭게 적어주세요..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              required
+            />
+            <div style={{ textAlign: 'right' }}>
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? '등록 중...' : '리뷰 등록하기'}
+              </button>
+            </div>
+          </form>
+
+          <h4 style={{ margin: '24px 0 12px 0', fontSize: '1.1rem' }}>💬 등록된 리뷰 목록 ({reviews.length})</h4>
+          {reviews.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', padding: '20px 0', textAlign: 'center' }}>
+              아직 등록된 리뷰가 없습니다. 첫 리뷰를 작성해보세요!
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {reviews.map((r) => (
+                <div key={r.id} style={{
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.05)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{r.author}</span>
+                    <span style={{ color: 'var(--accent-gold)', fontWeight: '700' }}>★ {r.rating}</span>
+                  </div>
+                  <p style={{ color: '#D1D5DB', fontSize: '0.95rem' }}>{r.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
