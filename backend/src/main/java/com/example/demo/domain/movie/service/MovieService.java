@@ -91,7 +91,7 @@ public class MovieService {
 
         return TmdbMovieDto.builder()
                 .id(topMatch != null ? topMatch.getId() : (long) (Math.abs(movieNm.hashCode()) + 10000))
-                .title(rankEmoji + movieNm)
+                .title(movieNm)
                 .originalTitle(topMatch != null ? topMatch.getOriginalTitle() : movieNm)
                 .overview(overview)
                 .posterPath(posterPath)
@@ -160,7 +160,7 @@ public class MovieService {
 
         return TmdbMovieDto.builder()
                 .id(topMatch != null ? topMatch.getId() : (long) (Math.abs(movieNm.hashCode()) + 10000))
-                .title(rankEmoji + movieNm)
+                .title(movieNm)
                 .originalTitle(topMatch != null ? topMatch.getOriginalTitle() : movieNm)
                 .overview(overview)
                 .posterPath(posterPath)

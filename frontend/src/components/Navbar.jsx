@@ -31,18 +31,6 @@ export default function Navbar({
 
       <div className="nav-actions">
         <button
-          className={`btn-wishlist ${viewMode === 'home' ? 'active' : ''}`}
-          onClick={onGoHome}
-          style={{
-            background: viewMode === 'home' ? 'var(--accent-gold)' : 'rgba(255, 255, 255, 0.05)',
-            color: viewMode === 'home' ? '#000' : '#FFF',
-            fontWeight: '700'
-          }}
-        >
-          🏆 박스오피스
-        </button>
-
-        <button
           className={`btn-wishlist ${viewMode === 'news' ? 'active' : ''}`}
           onClick={onGoNews}
           style={{

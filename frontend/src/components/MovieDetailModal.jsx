@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 export default function MovieDetailModal({ movie, user, onClose }) {
+  const [movieDetails, setMovieDetails] = useState(movie || {});
   const [reviews, setReviews] = useState([]);
   const [ratingSummary, setRatingSummary] = useState({ averageRating: 0, totalReviewCount: 0 });
   const [author, setAuthor] = useState(user ? user.nickname : '');
@@ -8,8 +9,10 @@ export default function MovieDetailModal({ movie, user, onClose }) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const posterUrl = movie.poster_path
-    ? (movie.poster_path.startsWith('http') ? movie.poster_path : `https://image.tmdb.org/t/p/w500${movie.poster_path}`)
+  const targetMovie = movieDetails || movie || {};
+  const rawPoster = targetMovie.poster_path || targetMovie.posterPath || '';
+  const posterUrl = rawPoster
+    ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w500${rawPoster}`)
     : 'https://via.placeholder.com/500x750?text=No+Poster';
 
   useEffect(() => {
@@ -17,15 +20,29 @@ export default function MovieDetailModal({ movie, user, onClose }) {
   }, [user]);
 
   useEffect(() => {
-    if (movie) {
-      fetchReviews();
-      fetchRatingSummary();
+    if (movie && movie.id) {
+      setMovieDetails(movie);
+      fetchMovieDetails(movie.id);
+      fetchReviews(movie.id);
+      fetchRatingSummary(movie.id);
     }
   }, [movie]);
 
-  const fetchReviews = async () => {
+  const fetchMovieDetails = async (movieId) => {
     try {
-      const res = await fetch(`/api/movies/${movie.id}/reviews`);
+      const res = await fetch(`/api/movies/${movieId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMovieDetails((prev) => ({ ...prev, ...data }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch full movie details:', err);
+    }
+  };
+
+  const fetchReviews = async (movieId) => {
+    try {
+      const res = await fetch(`/api/movies/${movieId}/reviews`);
       if (res.ok) {
         const data = await res.json();
         setReviews(data.content || []);
@@ -35,9 +52,9 @@ export default function MovieDetailModal({ movie, user, onClose }) {
     }
   };
 
-  const fetchRatingSummary = async () => {
+  const fetchRatingSummary = async (movieId) => {
     try {
-      const res = await fetch(`/api/movies/${movie.id}/rating-summary`);
+      const res = await fetch(`/api/movies/${movieId}/rating-summary`);
       if (res.ok) {
         const data = await res.json();
         setRatingSummary(data);
@@ -62,7 +79,7 @@ export default function MovieDetailModal({ movie, user, onClose }) {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          tmdbMovieId: movie.id,
+          tmdbMovieId: targetMovie.id,
           author,
           rating: parseFloat(rating),
           content
@@ -73,8 +90,8 @@ export default function MovieDetailModal({ movie, user, onClose }) {
         if (!user) setAuthor('');
         setContent('');
         setRating(5.0);
-        fetchReviews();
-        fetchRatingSummary();
+        fetchReviews(targetMovie.id);
+        fetchRatingSummary(targetMovie.id);
       }
     } catch (err) {
       console.error('Failed to submit review:', err);
@@ -91,15 +108,15 @@ export default function MovieDetailModal({ movie, user, onClose }) {
         <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
           <img
             src={posterUrl}
-            alt={movie.title}
+            alt={targetMovie.title}
             style={{ width: '220px', borderRadius: '16px', objectFit: 'cover' }}
           />
 
           <div style={{ flex: '1', minWidth: '280px' }}>
-            <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '10px' }}>{movie.title}</h2>
+            <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '10px' }}>{targetMovie.title || '제목 없음'}</h2>
             <div style={{ display: 'flex', gap: '15px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-              <span>개봉일: {movie.release_date || '미상'}</span>
-              <span>TMDB 평점: ★ {movie.vote_average ? movie.vote_average.toFixed(1) : '0.0'}</span>
+              <span>개봉일: {targetMovie.release_date || targetMovie.releaseDate || '미상'}</span>
+              <span>TMDB 평점: ★ {targetMovie.vote_average || targetMovie.voteAverage ? Number(targetMovie.vote_average || targetMovie.voteAverage).toFixed(1) : '0.0'}</span>
             </div>
 
             <div style={{
@@ -119,7 +136,7 @@ export default function MovieDetailModal({ movie, user, onClose }) {
             </div>
 
             <p style={{ lineHeight: '1.7', color: '#D1D5DB', marginBottom: '24px' }}>
-              {movie.overview || '줄거리 정보가 없습니다.'}
+              {targetMovie.overview || '줄거리 정보가 없습니다.'}
             </p>
           </div>
         </div>

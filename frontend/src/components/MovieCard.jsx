@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function MovieCard({ movie, onSelectMovie, isWishlisted, onToggleWishlist }) {
+export default function MovieCard({ movie, rank, onSelectMovie, isWishlisted, onToggleWishlist }) {
   const posterUrl = movie.poster_path
     ? (movie.poster_path.startsWith('http') ? movie.poster_path : `https://image.tmdb.org/t/p/w500${movie.poster_path}`)
     : 'https://via.placeholder.com/500x750?text=No+Poster';
@@ -9,6 +9,25 @@ export default function MovieCard({ movie, onSelectMovie, isWishlisted, onToggle
     <div className="movie-card glass" onClick={() => onSelectMovie(movie)}>
       <div className="poster-wrapper">
         <img src={posterUrl} alt={movie.title} className="poster-img" loading="lazy" />
+        
+        {rank && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '10px',
+              left: '10px',
+              background: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(8px)',
+              color: 'var(--accent-gold)',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              fontWeight: '800',
+              fontSize: '0.85rem'
+            }}
+          >
+            #{rank}
+          </div>
+        )}
         <button
           className="btn-wishlist-toggle"
           onClick={(e) => {

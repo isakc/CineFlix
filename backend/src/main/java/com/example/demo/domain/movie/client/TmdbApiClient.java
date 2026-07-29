@@ -26,36 +26,56 @@ public class TmdbApiClient {
     @Value("${tmdb.api.key:YOUR_TMDB_API_KEY_HERE}")
     private String apiKey;
 
+    private boolean isInvalidApiKey() {
+        return apiKey == null || apiKey.isBlank() || "sample_key".equals(apiKey) || "YOUR_TMDB_API_KEY_HERE".equals(apiKey) || apiKey.startsWith("YOUR_");
+    }
+
     public TmdbMovieListResponse getTopRatedMoviesByGenre(Integer genreId, int page) {
-        if ("sample_key".equals(apiKey)) {
+        if (isInvalidApiKey()) {
             return getMockSearchResults("Top Rated Movie");
         }
 
         try {
-            // vote_count.gte=1000 ensures only world-renowned masterpieces with at least 1,000 global ratings are shown!
-            if (genreId != null && genreId > 0) {
-                log.info("Fetching TMDB top-rated movies by genreId={}, page={} (min 1,000 votes)", genreId, page);
-                return restClient.get()
-                        .uri(baseUrl + "/discover/movie?api_key={apiKey}&language=ko-KR&sort_by=vote_average.desc&vote_count.gte=1000&with_genres={genreId}&page={page}", 
-                             apiKey, genreId, page)
-                        .retrieve()
-                        .body(TmdbMovieListResponse.class);
-            } else {
-                log.info("Fetching TMDB top-rated movies for all categories, page={} (min 1,000 votes)", page);
-                return restClient.get()
-                        .uri(baseUrl + "/discover/movie?api_key={apiKey}&language=ko-KR&sort_by=vote_average.desc&vote_count.gte=1000&page={page}", 
-                             apiKey, page)
-                        .retrieve()
-                        .body(TmdbMovieListResponse.class);
+            // First try min 10,000 global votes for ultra-high sample size S-tier masterpieces
+            TmdbMovieListResponse response = fetchTopRatedWithVoteThreshold(genreId, page, 10000);
+            if (response != null && response.getResults() != null && response.getResults().size() >= 10) {
+                return response;
             }
+
+            // Fallback to min 5,000 votes if a specific genre has fewer than 10 movies at 10k threshold
+            log.info("Fewer than 10 movies found with 10,000 votes for genreId={}. Falling back to 5,000 votes threshold.", genreId);
+            TmdbMovieListResponse fallbackResponse = fetchTopRatedWithVoteThreshold(genreId, page, 5000);
+            if (fallbackResponse != null && fallbackResponse.getResults() != null && !fallbackResponse.getResults().isEmpty()) {
+                return fallbackResponse;
+            }
+
+            return response != null ? response : getMockSearchResults("Top Rated Movie");
         } catch (Exception e) {
             log.error("Failed to fetch top-rated movies from TMDB (genreId={}): {}", genreId, e.getMessage());
             return getMockSearchResults("Top Rated Movie");
         }
     }
 
+    private TmdbMovieListResponse fetchTopRatedWithVoteThreshold(Integer genreId, int page, int minVotes) {
+        if (genreId != null && genreId > 0) {
+            log.info("Fetching TMDB top-rated movies by genreId={}, page={} (min {} votes)", genreId, page, minVotes);
+            return restClient.get()
+                    .uri(baseUrl + "/discover/movie?api_key={apiKey}&language=ko-KR&sort_by=vote_average.desc&vote_count.gte={minVotes}&with_genres={genreId}&page={page}", 
+                         apiKey, minVotes, genreId, page)
+                    .retrieve()
+                    .body(TmdbMovieListResponse.class);
+        } else {
+            log.info("Fetching TMDB top-rated movies for all categories, page={} (min {} votes)", page, minVotes);
+            return restClient.get()
+                    .uri(baseUrl + "/discover/movie?api_key={apiKey}&language=ko-KR&sort_by=vote_average.desc&vote_count.gte={minVotes}&page={page}", 
+                         apiKey, minVotes, page)
+                    .retrieve()
+                    .body(TmdbMovieListResponse.class);
+        }
+    }
+
     public TmdbMovieListResponse searchMovieByTitleAndYear(String query, String openDt, int page) {
-        if ("sample_key".equals(apiKey)) {
+        if (isInvalidApiKey()) {
             return getMockSearchResults(query);
         }
 
@@ -85,7 +105,7 @@ public class TmdbApiClient {
     }
 
     public TmdbMovieDto getMovieDetails(Long movieId) {
-        if ("sample_key".equals(apiKey)) {
+        if (isInvalidApiKey()) {
             return getMockMovieDetail(movieId);
         }
 

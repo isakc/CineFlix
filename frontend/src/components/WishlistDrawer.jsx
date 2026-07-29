@@ -29,7 +29,10 @@ export default function WishlistDrawer({ isOpen, onClose, wishlists, onRemoveWis
                   borderRadius: '14px',
                   cursor: 'pointer'
                 }}
-                onClick={() => onSelectMovie({ id: w.tmdbMovieId, title: w.movieTitle, poster_path: w.posterPath })}
+                onClick={() => {
+                  onSelectMovie({ id: w.tmdbMovieId, title: w.movieTitle, poster_path: w.posterPath });
+                  onClose();
+                }}
               >
                 <img
                   src={w.posterPath ? (w.posterPath.startsWith('http') ? w.posterPath : `https://image.tmdb.org/t/p/w200${w.posterPath}`) : 'https://via.placeholder.com/100'}
