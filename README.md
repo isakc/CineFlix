@@ -8,7 +8,7 @@ CineFlix는 Spring Boot 백엔드와 React(Vite) 프론트엔드를 기반으로
 
 - **프론트엔드 (Vercel)**: `https://cineflix-nine-ruddy.vercel.app`
 - **백엔드 API (Render)**: `https://cineflix-backend.onrender.com`
-- **Docker Hub Repository**: `https://hub.docker.com/r/ckals15/cineflix-backend`
+- **Docker Hub Repository**: `https://hub.docker.com/r/shape15/cineflix-backend`
 
 ---
 
