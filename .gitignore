@@ -23,3 +23,8 @@ frontend/dist/
 *.iml
 .vscode/
 .DS_Store
+
+# Documents
+*.docx
+CineFlix_Portfolio.docx
+
