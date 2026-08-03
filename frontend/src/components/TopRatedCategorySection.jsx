@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiUrl } from "../config/api";
 
 const GENRES = [
   { id: 0, name: "🎬 전체" },
@@ -24,11 +25,11 @@ export default function TopRatedCategorySection({
     const fetchTopRatedMovies = async () => {
       setLoading(true);
       try {
-        const url =
+        const path =
           selectedGenre > 0
             ? `/api/movies/top-rated?genreId=${selectedGenre}`
             : "/api/movies/top-rated";
-        const res = await fetch(url);
+        const res = await fetch(apiUrl(path));
         if (res.ok) {
           const data = await res.json();
           if (isMounted) {

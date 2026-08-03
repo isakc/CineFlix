@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiUrl } from '../config/api';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,7 +20,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     const payload = isLogin ? { email, password } : { email, password, nickname };
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(apiUrl(endpoint), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

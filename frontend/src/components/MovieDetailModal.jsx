@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from '../config/api';
 
 export default function MovieDetailModal({ movie, user, onClose }) {
   const [movieDetails, setMovieDetails] = useState(movie || {});
@@ -30,7 +31,7 @@ export default function MovieDetailModal({ movie, user, onClose }) {
 
   const fetchMovieDetails = async (movieId) => {
     try {
-      const res = await fetch(`/api/movies/${movieId}`);
+      const res = await fetch(apiUrl(`/api/movies/${movieId}`));
       if (res.ok) {
         const data = await res.json();
         setMovieDetails((prev) => ({ ...prev, ...data }));
@@ -42,7 +43,7 @@ export default function MovieDetailModal({ movie, user, onClose }) {
 
   const fetchReviews = async (movieId) => {
     try {
-      const res = await fetch(`/api/movies/${movieId}/reviews`);
+      const res = await fetch(apiUrl(`/api/movies/${movieId}/reviews`));
       if (res.ok) {
         const data = await res.json();
         setReviews(data.content || []);
@@ -54,7 +55,7 @@ export default function MovieDetailModal({ movie, user, onClose }) {
 
   const fetchRatingSummary = async (movieId) => {
     try {
-      const res = await fetch(`/api/movies/${movieId}/rating-summary`);
+      const res = await fetch(apiUrl(`/api/movies/${movieId}/rating-summary`));
       if (res.ok) {
         const data = await res.json();
         setRatingSummary(data);
@@ -75,7 +76,7 @@ export default function MovieDetailModal({ movie, user, onClose }) {
     }
 
     try {
-      const res = await fetch('/api/reviews', {
+      const res = await fetch(apiUrl('/api/reviews'), {
         method: 'POST',
         headers,
         body: JSON.stringify({

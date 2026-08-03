@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from '../config/api';
 
 export default function MovieNewsSection() {
   const [news, setNews] = useState([]);
@@ -11,7 +12,7 @@ export default function MovieNewsSection() {
   const fetchNews = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/news?query=영화');
+      const res = await fetch(apiUrl('/api/news?query=영화'));
       if (res.ok) {
         const data = await res.json();
         setNews(Array.isArray(data) ? data : []);

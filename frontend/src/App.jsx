@@ -6,6 +6,7 @@ import WishlistDrawer from "./components/WishlistDrawer";
 import AuthModal from "./components/AuthModal";
 import TopRatedCategorySection from "./components/TopRatedCategorySection";
 import MovieNewsSection from "./components/MovieNewsSection";
+import { apiUrl } from "./config/api";
 
 export default function App() {
   const [popularMovies, setPopularMovies] = useState([]);
@@ -42,7 +43,7 @@ export default function App() {
   const fetchPopularMovies = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/movies/popular");
+      const res = await fetch(apiUrl("/api/movies/popular"));
       if (res.ok) {
         const data = await res.json();
         setPopularMovies(Array.isArray(data.results) ? data.results : []);
@@ -69,7 +70,7 @@ export default function App() {
     const userIdentifier = getUserIdentifier();
     try {
       const res = await fetch(
-        `/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}`,
+        apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}`),
       );
       if (res.ok) {
         const data = await res.json();
@@ -89,7 +90,7 @@ export default function App() {
     if (existing) {
       try {
         const res = await fetch(
-          `/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${movie.id}`,
+          apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${movie.id}`),
           { method: "DELETE" },
         );
         if (res.ok) fetchWishlist();
@@ -100,7 +101,7 @@ export default function App() {
       const posterPath = movie.poster_path || "";
       const cleanTitle = (movie.title || "").replace(/^([🥇🥈🥉]|\d+위|\s|\.)+/g, "").trim();
       try {
-        const res = await fetch("/api/wishlists", {
+        const res = await fetch(apiUrl("/api/wishlists"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -122,7 +123,7 @@ export default function App() {
 
     try {
       const res = await fetch(
-        `/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${tmdbMovieId}`,
+        apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${tmdbMovieId}`),
         { method: "DELETE" }
       );
       if (res.ok) fetchWishlist();
@@ -141,7 +142,7 @@ export default function App() {
 
     try {
       const res = await fetch(
-        `/api/movies/search?query=${encodeURIComponent(searchQuery)}`,
+        apiUrl(`/api/movies/search?query=${encodeURIComponent(searchQuery)}`),
       );
       if (res.ok) {
         const data = await res.json();
