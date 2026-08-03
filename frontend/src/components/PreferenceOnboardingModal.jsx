@@ -3,17 +3,17 @@ import { apiUrl } from '../config/api';
 
 const FAMOUS_MOVIES_POOL = [
   { id: 157336, title: "인터스텔라", poster_path: "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
-  { id: 27205, title: "인셉션", poster_path: "/oYuLEW9W0bbUhEjAQe01meE69.jpg" },
+  { id: 27205, title: "인셉션", poster_path: "/edv5CZv27zE1JwP03qiozBG2iY2.jpg" },
   { id: 155, title: "다크 나이트", poster_path: "/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
   { id: 496243, title: "기생충", poster_path: "/7FiFiqB7LwR1ZpBf02aDqY7l6S.jpg" },
   { id: 299536, title: "어벤져스: 인피니티 워", poster_path: "/7WsyChvLEzFiDOVTGDRtq38d6UX.jpg" },
   { id: 313369, title: "라라랜드", poster_path: "/uDO8VRIEREsZLE1d860dDk.jpg" },
-  { id: 19995, title: "아바타", poster_path: "/6g02568gDq.jpg" },
-  { id: 508442, title: "소울", poster_path: "/hm58Jw4Lw8w8.jpg" },
-  { id: 597, title: "타이타닉", poster_path: "/9xjZS2rlVxm8SFx8k.jpg" },
-  { id: 475557, title: "조커", poster_path: "/udDclso.jpg" },
-  { id: 603, title: "매트릭스", poster_path: "/f89U3w9.jpg" },
-  { id: 545611, title: "에브리씽 에브리웨어 올 앳 원스", poster_path: "/r2J.jpg" },
+  { id: 19995, title: "아바타", poster_path: "/kyeqWdyUXW608qlYAQxs2jRGD9a.jpg" },
+  { id: 508442, title: "소울", poster_path: "/hm58Jw4Lw8w8P16iTepnSYkX8m.jpg" },
+  { id: 597, title: "타이타닉", poster_path: "/9xjZS2rlVxm8SFx8k1y976kQe9n.jpg" },
+  { id: 475557, title: "조커", poster_path: "/udDclsohSpR9WhjYiW2Wg0ZGEj.jpg" },
+  { id: 603, title: "매트릭스", poster_path: "/f89U3w9ZYsF2ftHxiXCb5Y0LVJe.jpg" },
+  { id: 545611, title: "에브리씽 에브리웨어 올 앳 원스", poster_path: "/r2J02Z2OpNTctfOSN1YwiiBDAsm.jpg" },
   { id: 13, title: "포레스트 검프", poster_path: "/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg" },
   { id: 129, title: "센과 치히로의 행방불명", poster_path: "/39wmItE2FMv4FNEzxsFm0LGoKW2.jpg" },
   { id: 372058, title: "너의 이름은.", poster_path: "/q719jXXEzOoYaps6babgKnFiONX.jpg" },
@@ -22,11 +22,11 @@ const FAMOUS_MOVIES_POOL = [
   { id: 361743, title: "탑건: 매버릭", poster_path: "/62HCioFi8hRfsSuvF3P2PrmmB1U.jpg" },
   { id: 324857, title: "스파이더맨: 뉴 유니버스", poster_path: "/uC6kgxR4WEVQG2wN1dhGlvLFWiv.jpg" },
   { id: 244786, title: "위플래쉬", poster_path: "/7fn624j5lj3xTme2SgiLCeMYmSX.jpg" },
-  { id: 8587, title: "어바웃 타임", poster_path: "/iE006w2c8C7Fm3l5Y0e5.jpg" },
-  { id: 150540, title: "인사이드 아웃", poster_path: "/lRHE0vVJ31I1gZ0GuF8.jpg" },
   { id: 1726, title: "아이언맨", poster_path: "/78lPtwv72eTNqFW99qvoGD822jU.jpg" },
   { id: 438631, title: "듄(Dune)", poster_path: "/d5NGoE8sKM5VFi9yG9y.jpg" }
 ];
+
+const FALLBACK_POSTER = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop";
 
 export default function PreferenceOnboardingModal({ isOpen, onClose, onComplete, popularMovies = [], userIdentifier }) {
   const [displayMovies, setDisplayMovies] = useState([]);
@@ -152,9 +152,9 @@ export default function PreferenceOnboardingModal({ isOpen, onClose, onComplete,
         }}>
           {displayMovies.map((movie) => {
             const isSelected = selectedMovieIds.includes(movie.id);
-            const posterUrl = movie.poster_path
+            const posterUrl = (movie.poster_path && movie.poster_path.length > 5)
               ? (movie.poster_path.startsWith('http') ? movie.poster_path : `https://image.tmdb.org/t/p/w300${movie.poster_path}`)
-              : 'https://via.placeholder.com/300x450?text=CineFlix';
+              : FALLBACK_POSTER;
 
             return (
               <div
@@ -168,12 +168,17 @@ export default function PreferenceOnboardingModal({ isOpen, onClose, onComplete,
                   border: isSelected ? '3px solid var(--accent-red)' : '2px solid transparent',
                   transform: isSelected ? 'scale(1.03)' : 'scale(1)',
                   transition: 'all 0.2s ease',
-                  boxShadow: isSelected ? '0 0 16px rgba(229, 9, 20, 0.6)' : 'none'
+                  boxShadow: isSelected ? '0 0 16px rgba(229, 9, 20, 0.6)' : 'none',
+                  background: '#1a1a24'
                 }}
               >
                 <img 
                   src={posterUrl} 
                   alt={movie.title} 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = FALLBACK_POSTER;
+                  }}
                   style={{ width: '100%', height: '190px', objectFit: 'cover', display: 'block' }} 
                 />
 
