@@ -55,7 +55,7 @@ export default function App() {
   const fetchPopularMovies = async () => {
     setLoading(true);
     try {
-      const res = await fetch(apiUrl("/api/movies/rankings"));
+      const res = await fetch(apiUrl("/api/movies/popular"));
       if (res.ok) {
         const data = await res.json();
         setPopularMovies(Array.isArray(data.results) ? data.results : []);

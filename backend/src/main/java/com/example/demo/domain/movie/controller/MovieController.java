@@ -14,7 +14,7 @@ public class MovieController {
 
     private final MovieService movieService;
 
-    @GetMapping("/popular")
+    @GetMapping({"/popular", "/rankings"})
     public ResponseEntity<TmdbMovieListResponse> getPopularMovies(
             @RequestParam(required = false) String targetDt,
             @RequestParam(defaultValue = "1") int page) {
