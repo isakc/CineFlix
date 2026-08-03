@@ -1,28 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiUrl } from '../config/api';
 
-const SAMPLE_ONBOARDING_MOVIES = [
+const FAMOUS_MOVIES_POOL = [
   { id: 157336, title: "인터스텔라", poster_path: "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
-  { id: 27205, title: "인셉션", poster_path: "/oYuLEW9W0bbUhEjAQe01 meE69.jpg" }, // fallbacks
+  { id: 27205, title: "인셉션", poster_path: "/oYuLEW9W0bbUhEjAQe01meE69.jpg" },
   { id: 155, title: "다크 나이트", poster_path: "/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
   { id: 496243, title: "기생충", poster_path: "/7FiFiqB7LwR1ZpBf02aDqY7l6S.jpg" },
   { id: 299536, title: "어벤져스: 인피니티 워", poster_path: "/7WsyChvLEzFiDOVTGDRtq38d6UX.jpg" },
-  { id: 313369, title: "라라랜드", poster_path: "/uDO8VRIEREsZLE 1d860dDk.jpg" },
+  { id: 313369, title: "라라랜드", poster_path: "/uDO8VRIEREsZLE1d860dDk.jpg" },
   { id: 19995, title: "아바타", poster_path: "/6g02568gDq.jpg" },
   { id: 508442, title: "소울", poster_path: "/hm58Jw4Lw8w8.jpg" },
   { id: 597, title: "타이타닉", poster_path: "/9xjZS2rlVxm8SFx8k.jpg" },
   { id: 475557, title: "조커", poster_path: "/udDclso.jpg" },
   { id: 603, title: "매트릭스", poster_path: "/f89U3w9.jpg" },
-  { id: 545611, title: "에브리씽 에브리웨어 올 앳 원스", poster_path: "/r2J.jpg" }
+  { id: 545611, title: "에브리씽 에브리웨어 올 앳 원스", poster_path: "/r2J.jpg" },
+  { id: 13, title: "포레스트 검프", poster_path: "/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg" },
+  { id: 129, title: "센과 치히로의 행방불명", poster_path: "/39wmItE2FMv4FNEzxsFm0LGoKW2.jpg" },
+  { id: 372058, title: "너의 이름은.", poster_path: "/q719jXXEzOoYaps6babgKnFiONX.jpg" },
+  { id: 98, title: "글래디에이터", poster_path: "/ty8TFPAu2PhPVwPxnhUQGlmATN5.jpg" },
+  { id: 872585, title: "오펜하이머", poster_path: "/8Gxv8gSFCU0XGDykEGvjZ71MYYh.jpg" },
+  { id: 361743, title: "탑건: 매버릭", poster_path: "/62HCioFi8hRfsSuvF3P2PrmmB1U.jpg" },
+  { id: 324857, title: "스파이더맨: 뉴 유니버스", poster_path: "/uC6kgxR4WEVQG2wN1dhGlvLFWiv.jpg" },
+  { id: 244786, title: "위플래쉬", poster_path: "/7fn624j5lj3xTme2SgiLCeMYmSX.jpg" },
+  { id: 8587, title: "어바웃 타임", poster_path: "/iE006w2c8C7Fm3l5Y0e5.jpg" },
+  { id: 150540, title: "인사이드 아웃", poster_path: "/lRHE0vVJ31I1gZ0GuF8.jpg" },
+  { id: 1726, title: "아이언맨", poster_path: "/78lPtwv72eTNqFW99qvoGD822jU.jpg" },
+  { id: 438631, title: "듄(Dune)", poster_path: "/d5NGoE8sKM5VFi9yG9y.jpg" }
 ];
 
 export default function PreferenceOnboardingModal({ isOpen, onClose, onComplete, popularMovies = [], userIdentifier }) {
-  const displayMovies = (popularMovies && popularMovies.length >= 10) 
-    ? popularMovies.slice(0, 12) 
-    : SAMPLE_ONBOARDING_MOVIES;
-
+  const [displayMovies, setDisplayMovies] = useState([]);
   const [selectedMovieIds, setSelectedMovieIds] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const shuffleMovies = () => {
+    let pool = [...FAMOUS_MOVIES_POOL];
+    if (popularMovies && popularMovies.length > 0) {
+      pool = [...popularMovies, ...FAMOUS_MOVIES_POOL];
+    }
+    const shuffled = pool.sort(() => 0.5 - Math.random());
+    const unique = [];
+    const seen = new Set();
+    for (const item of shuffled) {
+      if (item && item.id && !seen.has(item.id)) {
+        seen.add(item.id);
+        unique.push(item);
+      }
+      if (unique.length >= 12) break;
+    }
+    setDisplayMovies(unique);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedMovieIds([]);
+      shuffleMovies();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -52,12 +86,19 @@ export default function PreferenceOnboardingModal({ isOpen, onClose, onComplete,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
       if (res.ok) {
-        onComplete();
+        if (onComplete) {
+          await onComplete();
+        }
+        onClose();
+      } else {
+        console.error('Batch wishlist submission failed status:', res.status);
         onClose();
       }
     } catch (err) {
       console.error('Failed to submit onboarding preferences:', err);
+      onClose();
     } finally {
       setSubmitting(false);
     }
@@ -68,29 +109,46 @@ export default function PreferenceOnboardingModal({ isOpen, onClose, onComplete,
       <div 
         className="modal-card glass" 
         style={{ 
-          maxWidth: '820px', 
-          width: '90%', 
-          maxHeight: '85vh', 
+          maxWidth: '840px', 
+          width: '92%', 
+          maxHeight: '88vh', 
           overflowY: 'auto', 
           padding: '28px',
           borderRadius: '20px'
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <span style={{ fontSize: '2.5rem' }}>🎬</span>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: '8px 0', color: 'var(--text-primary)' }}>
-            취향 영화를 3개 이상 선택해 주세요!
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            선택하신 영화를 바탕으로 AI가 나만을 위한 맞춤 추천 영화를 찾아드립니다.
-          </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.7rem', fontWeight: '800', margin: '0 0 4px 0', color: 'var(--text-primary)' }}>
+              🎬 취향 영화를 선택해 주세요! (3개 이상 권장)
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+              선택하신 명작 영화들을 바탕으로 나만을 위한 맞춤 영화를 즉시 추천해 드립니다.
+            </p>
+          </div>
+          <button
+            onClick={shuffleMovies}
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: 'var(--accent-gold)',
+              border: '1px solid var(--accent-gold)',
+              borderRadius: '20px',
+              padding: '6px 14px',
+              fontSize: '0.85rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            🎲 다른 유명 영화 더보기
+          </button>
         </div>
 
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(135px, 1fr))', 
           gap: '14px',
-          marginBottom: '28px' 
+          marginBottom: '24px' 
         }}>
           {displayMovies.map((movie) => {
             const isSelected = selectedMovieIds.includes(movie.id);
@@ -116,7 +174,7 @@ export default function PreferenceOnboardingModal({ isOpen, onClose, onComplete,
                 <img 
                   src={posterUrl} 
                   alt={movie.title} 
-                  style={{ width: '100%', height: '200px', objectFit: 'cover', display: 'block' }} 
+                  style={{ width: '100%', height: '190px', objectFit: 'cover', display: 'block' }} 
                 />
 
                 {isSelected && (

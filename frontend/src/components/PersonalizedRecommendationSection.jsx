@@ -34,7 +34,9 @@ export default function PersonalizedRecommendationSection({
 
   const wishlistTitles = wishlists.slice(0, 3).map((w) => w.movieTitle).join(', ');
   const wishlistMap = wishlists.reduce((acc, item) => {
-    acc[item.tmdbMovieId] = item;
+    if (item && item.tmdbMovieId) {
+      acc[item.tmdbMovieId] = item;
+    }
     return acc;
   }, {});
 
@@ -52,37 +54,38 @@ export default function PersonalizedRecommendationSection({
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
               <span style={{ fontSize: '1.4rem' }}>🔮</span>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
-                {user ? user.nickname : '고객'}님을 위한 취향 맞춤 추천
+                {user ? user.nickname : '고객'}님을 위한 AI 취향 맞춤 추천
               </h2>
             </div>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
               {wishlists.length > 0
-                ? `선택하신 [${wishlistTitles}${wishlists.length > 3 ? ' 외' : ''}] 취향 패턴을 분석하여 엄선했습니다.`
-                : '좋아하는 영화를 고르시면 더욱 정교한 취향 분석이 제공됩니다.'}
+                ? `선택하신 [${wishlistTitles}${wishlists.length > 3 ? ' 외' : ''}] 취향 패턴을 분석하여 추천된 명작 리스트입니다.`
+                : '좋아하시는 영화를 3개 이상 선택하시면 AI 취향 분석 맞춤 영화가 선별됩니다!'}
             </p>
           </div>
 
           <button
             onClick={onOpenOnboarding}
             style={{
-              background: 'rgba(255, 255, 255, 0.12)',
+              background: 'rgba(255, 193, 7, 0.15)',
               color: 'var(--accent-gold)',
               border: '1px solid var(--accent-gold)',
               borderRadius: '20px',
-              padding: '8px 18px',
-              fontSize: '0.85rem',
+              padding: '10px 20px',
+              fontSize: '0.9rem',
               fontWeight: '700',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
+              boxShadow: '0 4px 12px rgba(255, 193, 7, 0.2)',
               transition: 'all 0.2s ease'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 193, 7, 0.2)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
             <span>🎯</span>
-            <span>취향 다시 선택하기</span>
+            <span>{wishlists.length > 0 ? '취향 영화 변경하기' : '취향 영화 고르기 ➔'}</span>
           </button>
         </div>
       </div>

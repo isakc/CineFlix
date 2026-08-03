@@ -173,6 +173,8 @@ export default function App() {
   const handleAuthSuccess = (userData) => {
     setUser(userData);
     localStorage.setItem("cineflix_user", JSON.stringify(userData));
+    setIsAuthOpen(false);
+    setIsOnboardingOpen(true);
   };
 
   const handleLogout = () => {
