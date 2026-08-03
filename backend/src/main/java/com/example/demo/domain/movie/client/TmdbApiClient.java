@@ -120,6 +120,22 @@ public class TmdbApiClient {
         }
     }
 
+    public TmdbMovieListResponse getMovieRecommendations(Long movieId) {
+        if (isInvalidApiKey()) {
+            return getMockSearchResults("Recommended Movie");
+        }
+
+        try {
+            return restClient.get()
+                    .uri(baseUrl + "/movie/{movieId}/recommendations?api_key={apiKey}&language=ko-KR&page=1", movieId, apiKey)
+                    .retrieve()
+                    .body(TmdbMovieListResponse.class);
+        } catch (Exception e) {
+            log.error("Failed to fetch movie recommendations for TMDB ID {}: {}", movieId, e.getMessage());
+            return getMockSearchResults("Recommended Movie");
+        }
+    }
+
     private TmdbMovieListResponse getMockSearchResults(String query) {
         return TmdbMovieListResponse.builder()
                 .page(1)

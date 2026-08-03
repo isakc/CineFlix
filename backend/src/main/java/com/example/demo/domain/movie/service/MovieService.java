@@ -15,7 +15,7 @@ import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -186,10 +186,45 @@ public class MovieService {
         if (userIdentifier != null && !userIdentifier.isBlank()) {
             List<Wishlist> wishlists = wishlistRepository.findByUserIdentifier(userIdentifier);
             if (!wishlists.isEmpty()) {
-                // Return top rated or discover movies tailored for wishlist user
-                return tmdbApiClient.getTopRatedMoviesByGenre(null, 1);
+                List<Wishlist> shuffledWishlists = new ArrayList<>(wishlists);
+                Collections.shuffle(shuffledWishlists);
+
+                List<TmdbMovieDto> combinedResults = new ArrayList<>();
+                Set<Long> seenIds = new HashSet<>();
+
+                for (Wishlist w : wishlists) {
+                    if (w.getTmdbMovieId() != null) {
+                        seenIds.add(w.getTmdbMovieId());
+                    }
+                }
+
+                for (Wishlist w : shuffledWishlists.stream().limit(4).toList()) {
+                    try {
+                        TmdbMovieListResponse rec = tmdbApiClient.getMovieRecommendations(w.getTmdbMovieId());
+                        if (rec != null && rec.getResults() != null) {
+                            for (TmdbMovieDto movie : rec.getResults()) {
+                                if (movie.getId() != null && !seenIds.contains(movie.getId())) {
+                                    seenIds.add(movie.getId());
+                                    combinedResults.add(movie);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to fetch recommendations for movie ID {}: {}", w.getTmdbMovieId(), e.getMessage());
+                    }
+                }
+
+                if (!combinedResults.isEmpty()) {
+                    Collections.shuffle(combinedResults);
+                    return TmdbMovieListResponse.builder()
+                            .page(1)
+                            .results(combinedResults)
+                            .totalPages(1)
+                            .totalResults(combinedResults.size())
+                            .build();
+                }
             }
         }
-        return tmdbApiClient.getTopRatedMoviesByGenre(28, 1); // Action/popular default
+        return tmdbApiClient.getTopRatedMoviesByGenre(28, 1);
     }
 }
