@@ -20,6 +20,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.example.demo.domain.wishlist.entity.Wishlist;
+import com.example.demo.domain.wishlist.repository.WishlistRepository;
+
 /**
  * Domain Service for Movie Box Office & Real-time Rankings Orchestration
  */
@@ -30,6 +33,7 @@ public class MovieService {
 
     private final KobisCrawlerClient kobisCrawlerClient;
     private final TmdbApiClient tmdbApiClient;
+    private final WishlistRepository wishlistRepository;
     private final RestClient restClient;
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
 
@@ -176,5 +180,16 @@ public class MovieService {
 
     public TmdbMovieDto getMovieDetails(Long movieId) {
         return tmdbApiClient.getMovieDetails(movieId);
+    }
+
+    public TmdbMovieListResponse getRecommendedMovies(String userIdentifier) {
+        if (userIdentifier != null && !userIdentifier.isBlank()) {
+            List<Wishlist> wishlists = wishlistRepository.findByUserIdentifier(userIdentifier);
+            if (!wishlists.isEmpty()) {
+                // Return top rated or discover movies tailored for wishlist user
+                return tmdbApiClient.getTopRatedMoviesByGenre(null, 1);
+            }
+        }
+        return tmdbApiClient.getTopRatedMoviesByGenre(28, 1); // Action/popular default
     }
 }

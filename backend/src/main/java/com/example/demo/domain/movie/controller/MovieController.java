@@ -45,4 +45,11 @@ public class MovieController {
         TmdbMovieDto response = movieService.getMovieDetails(id);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<TmdbMovieListResponse> getRecommendedMovies(
+            @RequestParam(required = false) String userIdentifier) {
+        TmdbMovieListResponse response = movieService.getRecommendedMovies(userIdentifier);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,6 +26,18 @@ public class WishlistService {
         }
         Wishlist wishlist = request.toEntity();
         return wishlistRepository.save(wishlist).getId();
+    }
+
+    @Transactional
+    public int addBatchToWishlist(List<WishlistAddRequest> requests) {
+        int addedCount = 0;
+        for (WishlistAddRequest req : requests) {
+            if (!wishlistRepository.existsByUserIdentifierAndTmdbMovieId(req.getUserIdentifier(), req.getTmdbMovieId())) {
+                wishlistRepository.save(req.toEntity());
+                addedCount++;
+            }
+        }
+        return addedCount;
     }
 
     public Page<WishlistResponse> getUserWishlist(String userIdentifier, Pageable pageable) {

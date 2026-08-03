@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/wishlists")
 @RequiredArgsConstructor
@@ -24,6 +26,12 @@ public class WishlistController {
     public ResponseEntity<Long> addToWishlist(@Valid @RequestBody WishlistAddRequest request) {
         Long wishlistId = wishlistService.addToWishlist(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(wishlistId);
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<Integer> addBatchToWishlist(@RequestBody List<WishlistAddRequest> requests) {
+        int count = wishlistService.addBatchToWishlist(requests);
+        return ResponseEntity.status(HttpStatus.CREATED).body(count);
     }
 
     @GetMapping

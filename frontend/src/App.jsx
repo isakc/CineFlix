@@ -6,6 +6,8 @@ import WishlistDrawer from "./components/WishlistDrawer";
 import AuthModal from "./components/AuthModal";
 import TopRatedCategorySection from "./components/TopRatedCategorySection";
 import MovieNewsSection from "./components/MovieNewsSection";
+import PreferenceOnboardingModal from "./components/PreferenceOnboardingModal";
+import PersonalizedRecommendationSection from "./components/PersonalizedRecommendationSection";
 import { apiUrl } from "./config/api";
 
 export default function App() {
@@ -18,6 +20,7 @@ export default function App() {
   const [wishlists, setWishlists] = useState([]);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("cineflix_user");
     if (savedUser) {
@@ -205,6 +208,7 @@ export default function App() {
         viewMode={viewMode}
         wishlistCount={safeWishlists.length}
         onOpenWishlist={() => setIsWishlistOpen(true)}
+        onOpenOnboarding={() => setIsOnboardingOpen(true)}
         user={user}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={handleLogout}
@@ -217,6 +221,17 @@ export default function App() {
           </div>
         ) : (
           <>
+            {viewMode === "home" && (
+              <PersonalizedRecommendationSection
+                user={user}
+                userIdentifier={getUserIdentifier()}
+                wishlists={safeWishlists}
+                onMovieClick={setSelectedMovie}
+                onToggleWishlist={handleToggleWishlist}
+                onOpenOnboarding={() => setIsOnboardingOpen(true)}
+              />
+            )}
+
             <div className="section-header">
               {viewMode === "home" ? (
                 <>
@@ -359,6 +374,14 @@ export default function App() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+      />
+
+      <PreferenceOnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onComplete={fetchWishlist}
+        popularMovies={popularMovies}
+        userIdentifier={getUserIdentifier()}
       />
     </div>
   );
