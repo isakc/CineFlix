@@ -6,8 +6,6 @@ import WishlistDrawer from "./components/WishlistDrawer";
 import AuthModal from "./components/AuthModal";
 import TopRatedCategorySection from "./components/TopRatedCategorySection";
 import MovieNewsSection from "./components/MovieNewsSection";
-import PreferenceOnboardingModal from "./components/PreferenceOnboardingModal";
-import PersonalizedRecommendationSection from "./components/PersonalizedRecommendationSection";
 import { apiUrl } from "./config/api";
 
 export default function App() {
@@ -20,7 +18,6 @@ export default function App() {
   const [wishlists, setWishlists] = useState([]);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("cineflix_user");
     if (savedUser) {
@@ -43,93 +40,97 @@ export default function App() {
     fetchWishlist();
   }, [user]);
 
+  const getUserIdentifier = () => {
+    if (user && user.nickname) {
+      return user.nickname;
+    }
+    let guestId = localStorage.getItem("guest_identifier");
+    if (!guestId) {
+      guestId = "guest_" + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem("guest_identifier", guestId);
+    }
+    return guestId;
+  };
+
   const fetchPopularMovies = async () => {
     setLoading(true);
     try {
-      const res = await fetch(apiUrl("/api/movies/popular"));
+      const res = await fetch(apiUrl("/api/movies/rankings"));
       if (res.ok) {
         const data = await res.json();
         setPopularMovies(Array.isArray(data.results) ? data.results : []);
       }
     } catch (err) {
-      console.error("Failed to fetch popular movies:", err);
+      console.error("Failed to fetch rankings:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getUserIdentifier = () => {
-    if (user && user.email) return user.email;
-
-    let guestId = localStorage.getItem("cineflix_guest_id");
-    if (!guestId) {
-      guestId = "guest_" + Math.random().toString(36).substring(2, 11);
-      localStorage.setItem("cineflix_guest_id", guestId);
-    }
-    return guestId;
-  };
-
   const fetchWishlist = async () => {
-    const userIdentifier = getUserIdentifier();
     try {
+      const userIdentifier = getUserIdentifier();
       const res = await fetch(
         apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}`),
       );
       if (res.ok) {
         const data = await res.json();
-        setWishlists(Array.isArray(data) ? data : data.content || []);
+        setWishlists(Array.isArray(data) ? data : []);
       }
     } catch (err) {
-      console.error("Failed to fetch wishlists:", err);
-      setWishlists([]);
+      console.error("Failed to fetch wishlist:", err);
     }
   };
 
   const handleToggleWishlist = async (movie) => {
     const userIdentifier = getUserIdentifier();
-    const list = Array.isArray(wishlists) ? wishlists : [];
-    const existing = list.find((w) => w.tmdbMovieId === movie.id);
+    const isWishlisted = wishlists.some((w) => w.tmdbMovieId === movie.id);
 
-    if (existing) {
+    if (isWishlisted) {
+      const target = wishlists.find((w) => w.tmdbMovieId === movie.id);
+      if (!target) return;
       try {
-        const res = await fetch(
-          apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${movie.id}`),
-          { method: "DELETE" },
-        );
-        if (res.ok) fetchWishlist();
+        const res = await fetch(apiUrl(`/api/wishlists/${target.id}`), {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          fetchWishlist();
+        }
       } catch (err) {
         console.error("Failed to remove wishlist:", err);
       }
     } else {
-      const posterPath = movie.poster_path || "";
       const cleanTitle = (movie.title || "").replace(/^([🥇🥈🥉]|\d+위|\s|\.)+/g, "").trim();
+      const payload = {
+        userIdentifier,
+        tmdbMovieId: movie.id,
+        movieTitle: cleanTitle,
+        posterPath: movie.poster_path || movie.posterPath || "",
+      };
+
       try {
         const res = await fetch(apiUrl("/api/wishlists"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userIdentifier,
-            tmdbMovieId: movie.id,
-            movieTitle: cleanTitle,
-            posterPath,
-          }),
+          body: JSON.stringify(payload),
         });
-        if (res.ok) fetchWishlist();
+        if (res.ok) {
+          fetchWishlist();
+        }
       } catch (err) {
         console.error("Failed to add wishlist:", err);
       }
     }
   };
 
-  const handleRemoveWishlist = async (tmdbMovieId) => {
-    const userIdentifier = getUserIdentifier();
-
+  const handleRemoveWishlist = async (id) => {
     try {
-      const res = await fetch(
-        apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${tmdbMovieId}`),
-        { method: "DELETE" }
-      );
-      if (res.ok) fetchWishlist();
+      const res = await fetch(apiUrl(`/api/wishlists/${id}`), {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchWishlist();
+      }
     } catch (err) {
       console.error("Failed to remove wishlist:", err);
     }
@@ -174,7 +175,6 @@ export default function App() {
     setUser(userData);
     localStorage.setItem("cineflix_user", JSON.stringify(userData));
     setIsAuthOpen(false);
-    setIsOnboardingOpen(true);
   };
 
   const handleLogout = () => {
@@ -210,7 +210,6 @@ export default function App() {
         viewMode={viewMode}
         wishlistCount={safeWishlists.length}
         onOpenWishlist={() => setIsWishlistOpen(true)}
-        onOpenOnboarding={() => setIsOnboardingOpen(true)}
         user={user}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={handleLogout}
@@ -223,17 +222,6 @@ export default function App() {
           </div>
         ) : (
           <>
-            {viewMode === "home" && (
-              <PersonalizedRecommendationSection
-                user={user}
-                userIdentifier={getUserIdentifier()}
-                wishlists={safeWishlists}
-                onMovieClick={setSelectedMovie}
-                onToggleWishlist={handleToggleWishlist}
-                onOpenOnboarding={() => setIsOnboardingOpen(true)}
-              />
-            )}
-
             <div className="section-header">
               {viewMode === "home" ? (
                 <>
@@ -376,14 +364,6 @@ export default function App() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onAuthSuccess={handleAuthSuccess}
-      />
-
-      <PreferenceOnboardingModal
-        isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
-        onComplete={fetchWishlist}
-        popularMovies={popularMovies}
-        userIdentifier={getUserIdentifier()}
       />
     </div>
   );
