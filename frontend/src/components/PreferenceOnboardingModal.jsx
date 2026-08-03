@@ -152,8 +152,9 @@ export default function PreferenceOnboardingModal({ isOpen, onClose, onComplete,
         }}>
           {displayMovies.map((movie) => {
             const isSelected = selectedMovieIds.includes(movie.id);
-            const posterUrl = (movie.poster_path && movie.poster_path.length > 5)
-              ? (movie.poster_path.startsWith('http') ? movie.poster_path : `https://image.tmdb.org/t/p/w300${movie.poster_path}`)
+            const rawPoster = movie.poster_path || movie.posterPath;
+            const posterUrl = (rawPoster && typeof rawPoster === 'string' && rawPoster.length > 3)
+              ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w500${rawPoster.startsWith('/') ? rawPoster : '/' + rawPoster}`)
               : FALLBACK_POSTER;
 
             return (

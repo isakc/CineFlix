@@ -1,9 +1,10 @@
 import React from 'react';
 
 export default function MovieCard({ movie, rank, onSelectMovie, isWishlisted, onToggleWishlist }) {
-  const posterUrl = movie.poster_path
-    ? (movie.poster_path.startsWith('http') ? movie.poster_path : `https://image.tmdb.org/t/p/w500${movie.poster_path}`)
-    : 'https://via.placeholder.com/500x750?text=No+Poster';
+  const rawPoster = movie.poster_path || movie.posterPath;
+  const posterUrl = (rawPoster && typeof rawPoster === 'string' && rawPoster.length > 3)
+    ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w500${rawPoster.startsWith('/') ? rawPoster : '/' + rawPoster}`)
+    : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop';
 
   return (
     <div className="movie-card glass" onClick={() => onSelectMovie(movie)}>
