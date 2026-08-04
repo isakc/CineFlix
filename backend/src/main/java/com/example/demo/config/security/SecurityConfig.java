@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/reviews/**", "/api/wishlists/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/reviews", "/api/wishlists").permitAll() // allow for guest/registered users
                         .anyRequest().permitAll()
