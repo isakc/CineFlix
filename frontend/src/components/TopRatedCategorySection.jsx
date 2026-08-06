@@ -145,11 +145,12 @@ export default function TopRatedCategorySection({
           {movies.map((m, idx) => {
             if (!m) return null;
 
-            const poster = m.poster_path
-              ? m.poster_path.startsWith("http")
-                ? m.poster_path
-                : `https://image.tmdb.org/t/p/w500${m.poster_path}`
-              : "https://via.placeholder.com/500x750?text=No+Poster";
+            const rawPoster = m.poster_path || m.posterPath;
+            const poster = (rawPoster && typeof rawPoster === 'string' && rawPoster.length > 3)
+              ? (rawPoster.startsWith('http')
+                ? rawPoster
+                : `https://image.tmdb.org/t/p/w500${rawPoster.startsWith('/') ? rawPoster : '/' + rawPoster}`)
+              : "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop";
 
             const isWishlisted =
               wishlistMap && m.id ? !!wishlistMap[m.id] : false;
