@@ -182,6 +182,10 @@ public class MovieService {
         return tmdbApiClient.getMovieDetails(movieId);
     }
 
+    public com.example.demo.domain.movie.dto.TmdbCreditsResponse getMovieCredits(Long movieId) {
+        return tmdbApiClient.getMovieCredits(movieId);
+    }
+
     public TmdbMovieListResponse getRecommendedMovies(String userIdentifier) {
         if (userIdentifier != null && !userIdentifier.isBlank()) {
             List<Wishlist> wishlists = wishlistRepository.findByUserIdentifier(userIdentifier);

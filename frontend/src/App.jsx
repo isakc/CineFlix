@@ -1,25 +1,29 @@
 import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import MovieCard from "./components/MovieCard";
-import MovieDetailModal from "./components/MovieDetailModal";
 import WishlistDrawer from "./components/WishlistDrawer";
 import AuthModal from "./components/AuthModal";
 import TopRatedCategorySection from "./components/TopRatedCategorySection";
 import MovieNewsSection from "./components/MovieNewsSection";
 import PlaylistModal from "./components/PlaylistModal";
+import MovieDetailPage from "./pages/MovieDetailPage";
 import { apiUrl } from "./config/api";
 
-export default function App() {
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [popularMovies, setPopularMovies] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
-  const [viewMode, setViewMode] = useState("home"); // 'home' | 'news' | 'search'
-  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [viewMode, setViewMode] = useState("home"); // 'home' | 'search'
   const [wishlists, setWishlists] = useState([]);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
+
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("cineflix_user");
     if (savedUser) {
@@ -31,6 +35,7 @@ export default function App() {
     }
     return null;
   });
+
   const [loading, setLoading] = useState(true);
   const [sliderPage, setSliderPage] = useState(0);
 
@@ -146,6 +151,10 @@ export default function App() {
     setActiveQuery(searchQuery);
     setViewMode("search");
 
+    if (location.pathname !== "/") {
+      navigate("/");
+    }
+
     try {
       const res = await fetch(
         apiUrl(`/api/movies/search?query=${encodeURIComponent(searchQuery)}`),
@@ -165,12 +174,15 @@ export default function App() {
     setViewMode("home");
     setSearchQuery("");
     setActiveQuery("");
+    navigate("/");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleGoNews = () => {
-    setViewMode("news");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleSelectMovie = (movie) => {
+    if (movie && movie.id) {
+      navigate(`/movie/${movie.id}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleAuthSuccess = (userData) => {
@@ -207,9 +219,6 @@ export default function App() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onSearchSubmit={handleSearchSubmit}
-        onGoHome={handleGoHome}
-        onGoNews={handleGoNews}
-        viewMode={viewMode}
         wishlistCount={safeWishlists.length}
         onOpenWishlist={() => setIsWishlistOpen(true)}
         onOpenPlaylist={() => setIsPlaylistOpen(true)}
@@ -218,150 +227,159 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      <div className="container" style={{ paddingTop: "35px" }}>
-        {viewMode === "news" ? (
-          <div style={{ paddingTop: "10px" }}>
-            <MovieNewsSection />
-          </div>
-        ) : (
-          <>
-            <div className="section-header">
-              {viewMode === "home" ? (
-                <>
-                  <h2>🏆 박스오피스 순위 </h2>
-                  <div className="slider-controls">
-                    <div className="slider-tab-group">
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <div className="container" style={{ paddingTop: "35px" }}>
+              <div className="section-header">
+                {viewMode === "home" ? (
+                  <>
+                    <h2>🏆 박스오피스 순위</h2>
+                    <div className="slider-controls">
+                      <div className="slider-tab-group">
+                        <button
+                          className={`slider-tab ${sliderPage === 0 ? "active" : ""}`}
+                          onClick={() => setSliderPage(0)}
+                        >
+                          🥇 1위 ~ 5위
+                        </button>
+                        <button
+                          className={`slider-tab ${sliderPage === 1 ? "active" : ""}`}
+                          onClick={() => setSliderPage(1)}
+                        >
+                          🍿 6위 ~ 10위
+                        </button>
+                      </div>
                       <button
-                        className={`slider-tab ${sliderPage === 0 ? "active" : ""}`}
-                        onClick={() => setSliderPage(0)}
+                        className="slider-btn"
+                        onClick={() =>
+                          setSliderPage((prev) => Math.max(0, prev - 1))
+                        }
+                        disabled={sliderPage === 0}
+                        title="이전 5개 영화"
                       >
-                        🥇 1위 ~ 5위
+                        ◀
                       </button>
                       <button
-                        className={`slider-tab ${sliderPage === 1 ? "active" : ""}`}
-                        onClick={() => setSliderPage(1)}
+                        className="slider-btn"
+                        onClick={() =>
+                          setSliderPage((prev) =>
+                            Math.min(totalPages - 1, prev + 1),
+                          )
+                        }
+                        disabled={sliderPage >= totalPages - 1}
+                        title="다음 5개 영화"
                       >
-                        🍿 6위 ~ 10위
+                        ▶
                       </button>
                     </div>
-                    <button
-                      className="slider-btn"
-                      onClick={() =>
-                        setSliderPage((prev) => Math.max(0, prev - 1))
-                      }
-                      disabled={sliderPage === 0}
-                      title="이전 5개 영화"
-                    >
-                      ◀
-                    </button>
-                    <button
-                      className="slider-btn"
-                      onClick={() =>
-                        setSliderPage((prev) =>
-                          Math.min(totalPages - 1, prev + 1),
-                        )
-                      }
-                      disabled={sliderPage >= totalPages - 1}
-                      title="다음 5개 영화"
-                    >
-                      ▶
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    width: "100%",
-                  }}
-                >
-                  <h2>
-                    🔍 '{activeQuery}' 검색 결과 ({searchResults.length}건)
-                  </h2>
-                  <button
-                    className="btn-primary"
-                    onClick={handleGoHome}
+                  </>
+                ) : (
+                  <div
                     style={{
-                      background: "rgba(255, 255, 255, 0.1)",
-                      border: "1px solid var(--border-color)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
                     }}
                   >
-                    ⬅️ 인기 차트로 돌아가기
-                  </button>
+                    <h2>
+                      🔍 '{activeQuery}' 검색 결과 ({searchResults.length}건)
+                    </h2>
+                    <button
+                      className="btn-primary"
+                      onClick={handleGoHome}
+                      style={{
+                        background: "rgba(255, 255, 255, 0.1)",
+                        border: "1px solid var(--border-color)",
+                      }}
+                    >
+                      ⬅️ 인기 차트로 돌아가기
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {loading ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "60px",
+                    color: "var(--text-secondary)",
+                    fontSize: "1.2rem",
+                  }}
+                >
+                  🎬 영화 데이터를 불러오는 중입니다...
+                </div>
+              ) : displayMovies.length === 0 ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "60px",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  검색 결과가 없습니다. 다른 키워드로 검색해 보세요.
+                </div>
+              ) : (
+                <div
+                  className={viewMode === "home" ? "movie-grid-5" : "movie-grid"}
+                  key={viewMode === "home" ? sliderPage : "search"}
+                >
+                  {displayMovies.map((movie, idx) => (
+                    <MovieCard
+                      key={movie.id}
+                      movie={movie}
+                      rank={viewMode === "home" ? startIndex + idx + 1 : null}
+                      onSelectMovie={handleSelectMovie}
+                      isWishlisted={safeWishlists.some(
+                        (w) => w.tmdbMovieId === movie.id,
+                      )}
+                      onToggleWishlist={handleToggleWishlist}
+                    />
+                  ))}
                 </div>
               )}
+
+              {/* Top Rated Genre Category Section */}
+              {viewMode === "home" && (
+                <TopRatedCategorySection
+                  onMovieClick={handleSelectMovie}
+                  wishlistMap={wishlistMap}
+                  onToggleWishlist={handleToggleWishlist}
+                />
+              )}
             </div>
-
-            {loading ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "60px",
-                  color: "var(--text-secondary)",
-                  fontSize: "1.2rem",
-                }}
-              >
-                🎬 영화 데이터를 불러오는 중입니다...
-              </div>
-            ) : displayMovies.length === 0 ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "60px",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                검색 결과가 없습니다. 다른 키워드로 검색해 보세요.
-              </div>
-            ) : (
-              <div
-                className={viewMode === "home" ? "movie-grid-5" : "movie-grid"}
-                key={viewMode === "home" ? sliderPage : "search"}
-              >
-                {displayMovies.map((movie, idx) => (
-                  <MovieCard
-                    key={movie.id}
-                    movie={movie}
-                    rank={viewMode === "home" ? startIndex + idx + 1 : null}
-                    onSelectMovie={setSelectedMovie}
-                    isWishlisted={safeWishlists.some(
-                      (w) => w.tmdbMovieId === movie.id,
-                    )}
-                    onToggleWishlist={handleToggleWishlist}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Top Rated Genre Category Section */}
-            {viewMode === "home" && (
-              <TopRatedCategorySection
-                onMovieClick={setSelectedMovie}
-                wishlistMap={wishlistMap}
-                onToggleWishlist={handleToggleWishlist}
-              />
-            )}
-          </>
-        )}
-      </div>
-
-      {selectedMovie && (
-        <MovieDetailModal
-          movie={selectedMovie}
-          user={user}
-          userIdentifier={getUserIdentifier()}
-          onClose={() => setSelectedMovie(null)}
+          }
         />
-      )}
+
+        <Route
+          path="/movie/:id"
+          element={
+            <MovieDetailPage
+              user={user}
+              userIdentifier={getUserIdentifier()}
+            />
+          }
+        />
+
+        <Route
+          path="/news"
+          element={
+            <div className="container" style={{ paddingTop: "35px" }}>
+              <MovieNewsSection />
+            </div>
+          }
+        />
+      </Routes>
 
       <WishlistDrawer
         isOpen={isWishlistOpen}
         onClose={() => setIsWishlistOpen(false)}
         wishlists={safeWishlists}
         onRemoveWishlist={handleRemoveWishlist}
-        onSelectMovie={setSelectedMovie}
+        onSelectMovie={handleSelectMovie}
       />
 
       <AuthModal
@@ -375,8 +393,16 @@ export default function App() {
         onClose={() => setIsPlaylistOpen(false)}
         userIdentifier={getUserIdentifier()}
         user={user}
-        onMovieClick={setSelectedMovie}
+        onMovieClick={handleSelectMovie}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }

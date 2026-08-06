@@ -53,6 +53,13 @@ public class MovieController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "영화 출연진(배우) 정보 조회", description = "특정 TMDB 영화 ID로 출연 배우 목록과 배역명, 프로필 사진을 조회합니다.")
+    @GetMapping("/{id}/credits")
+    public ResponseEntity<com.example.demo.domain.movie.dto.TmdbCreditsResponse> getMovieCredits(@PathVariable Long id) {
+        com.example.demo.domain.movie.dto.TmdbCreditsResponse response = movieService.getMovieCredits(id);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "AI 사용자 맞춤 영화 추천", description = "사용자의 위시리스트 취향을 분석하여 맞춤 연관 영화 목록을 제공합니다.")
     @GetMapping("/recommendations")
     public ResponseEntity<TmdbMovieListResponse> getRecommendedMovies(

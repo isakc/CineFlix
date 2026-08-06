@@ -1,12 +1,10 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function Navbar({
   searchQuery,
   setSearchQuery,
   onSearchSubmit,
-  onGoHome,
-  onGoNews,
-  viewMode,
   wishlistCount,
   onOpenWishlist,
   onOpenPlaylist,
@@ -14,9 +12,22 @@ export default function Navbar({
   onOpenAuth,
   onLogout
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleGoHome = () => {
+    navigate('/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleGoNews = () => {
+    navigate('/news');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <nav className="navbar">
-      <div className="nav-brand" onClick={onGoHome} style={{ cursor: 'pointer' }}>
+      <div className="nav-brand" onClick={handleGoHome} style={{ cursor: 'pointer' }}>
         🎬 Cine<span>Flix</span>
       </div>
 
@@ -45,11 +56,11 @@ export default function Navbar({
         </button>
 
         <button
-          className={`btn-wishlist ${viewMode === 'news' ? 'active' : ''}`}
-          onClick={onGoNews}
+          className={`btn-wishlist ${location.pathname === '/news' ? 'active' : ''}`}
+          onClick={handleGoNews}
           style={{
-            background: viewMode === 'news' ? 'var(--accent-gold)' : 'rgba(255, 255, 255, 0.05)',
-            color: viewMode === 'news' ? '#000' : '#FFF',
+            background: location.pathname === '/news' ? 'var(--accent-gold)' : 'rgba(255, 255, 255, 0.05)',
+            color: location.pathname === '/news' ? '#000' : '#FFF',
             fontWeight: '700'
           }}
         >

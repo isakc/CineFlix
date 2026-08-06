@@ -1,5 +1,6 @@
 package com.example.demo.domain.movie.client;
 
+import com.example.demo.domain.movie.dto.TmdbCreditsResponse;
 import com.example.demo.domain.movie.dto.TmdbMovieDto;
 import com.example.demo.domain.movie.dto.TmdbMovieListResponse;
 import lombok.RequiredArgsConstructor;
@@ -133,6 +134,22 @@ public class TmdbApiClient {
         } catch (Exception e) {
             log.error("Failed to fetch movie recommendations for TMDB ID {}: {}", movieId, e.getMessage());
             return getMockSearchResults("Recommended Movie");
+        }
+    }
+
+    public TmdbCreditsResponse getMovieCredits(Long movieId) {
+        if (isInvalidApiKey()) {
+            return TmdbCreditsResponse.builder().id(movieId).cast(List.of()).build();
+        }
+
+        try {
+            return restClient.get()
+                    .uri(baseUrl + "/movie/{movieId}/credits?api_key={apiKey}&language=ko-KR", movieId, apiKey)
+                    .retrieve()
+                    .body(TmdbCreditsResponse.class);
+        } catch (Exception e) {
+            log.error("Failed to fetch movie credits for TMDB ID {}: {}", movieId, e.getMessage());
+            return TmdbCreditsResponse.builder().id(movieId).cast(List.of()).build();
         }
     }
 
