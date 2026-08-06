@@ -6,11 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,6 +28,11 @@ public class PlaylistResponse {
     private List<PlaylistItemResponse> items;
     private int itemCount;
     private LocalDateTime createdAt;
+
+    @JsonProperty("isPublic")
+    public boolean isPublic() {
+        return isPublic;
+    }
 
     public static PlaylistResponse from(Playlist playlist) {
         List<PlaylistItemResponse> itemResponses = playlist.getItems() == null

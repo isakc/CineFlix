@@ -4,12 +4,10 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,4 +30,19 @@ public class PlaylistCreateRequest {
     @JsonAlias({"public", "is_public"})
     @Builder.Default
     private boolean isPublic = true;
+
+    @JsonProperty("isPublic")
+    public boolean isPublic() {
+        return isPublic;
+    }
+
+    @JsonProperty("isPublic")
+    public boolean getIsPublic() {
+        return isPublic;
+    }
+
+    @JsonProperty("isPublic")
+    public void setIsPublic(boolean isPublic) {
+        this.isPublic = isPublic;
+    }
 }

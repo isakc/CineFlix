@@ -68,7 +68,8 @@ export default function PlaylistModal({
           userIdentifier: userIdentifier || 'guest',
           title: newTitle.trim(),
           description: newDescription.trim(),
-          isPublic
+          isPublic: Boolean(isPublic),
+          public: Boolean(isPublic)
         })
       });
 

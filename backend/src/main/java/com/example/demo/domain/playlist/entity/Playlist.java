@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.List;
 @Entity
 @Table(name = "playlists")
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,6 +34,7 @@ public class Playlist {
     @Column(nullable = false)
     private String userIdentifier;
 
+    @Column(name = "is_public", nullable = false)
     @JsonProperty("isPublic")
     @Builder.Default
     private boolean isPublic = true;
@@ -45,5 +48,15 @@ public class Playlist {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    @JsonProperty("isPublic")
+    public boolean isPublic() {
+        return isPublic;
+    }
+
+    @JsonProperty("isPublic")
+    public void setPublic(boolean isPublic) {
+        this.isPublic = isPublic;
     }
 }
