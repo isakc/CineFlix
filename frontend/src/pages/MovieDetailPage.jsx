@@ -370,8 +370,11 @@ export default function MovieDetailPage({ user, userIdentifier }) {
             gap: '18px'
           }}>
             {castList.map((actor) => {
-              const actorPhoto = actor.profile_path || actor.profilePath
-                ? `https://image.tmdb.org/t/p/w185${actor.profile_path || actor.profilePath}`
+              const rawActorPhoto = actor.profile_path || actor.profilePath;
+              const actorPhoto = (rawActorPhoto && typeof rawActorPhoto === 'string' && rawActorPhoto.length > 3)
+                ? (rawActorPhoto.startsWith('http')
+                  ? rawActorPhoto
+                  : `https://image.tmdb.org/t/p/w185${rawActorPhoto.startsWith('/') ? rawActorPhoto : '/' + rawActorPhoto}`)
                 : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop';
 
               return (

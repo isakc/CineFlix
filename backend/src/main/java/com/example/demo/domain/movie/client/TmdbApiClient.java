@@ -1,5 +1,6 @@
 package com.example.demo.domain.movie.client;
 
+import com.example.demo.domain.movie.dto.TmdbCastDto;
 import com.example.demo.domain.movie.dto.TmdbCreditsResponse;
 import com.example.demo.domain.movie.dto.TmdbMovieDto;
 import com.example.demo.domain.movie.dto.TmdbMovieListResponse;
@@ -37,56 +38,44 @@ public class TmdbApiClient {
         }
 
         try {
-            // First try min 10,000 global votes for ultra-high sample size S-tier masterpieces
             TmdbMovieListResponse response = fetchTopRatedWithVoteThreshold(genreId, page, 10000);
             if (response != null && response.getResults() != null && response.getResults().size() >= 10) {
                 return response;
             }
 
-            // Fallback to min 5,000 votes if a specific genre has fewer than 10 movies at 10k threshold
-            log.info("Fewer than 10 movies found with 10,000 votes for genreId={}. Falling back to 5,000 votes threshold.", genreId);
-            TmdbMovieListResponse fallbackResponse = fetchTopRatedWithVoteThreshold(genreId, page, 5000);
-            if (fallbackResponse != null && fallbackResponse.getResults() != null && !fallbackResponse.getResults().isEmpty()) {
-                return fallbackResponse;
+            response = fetchTopRatedWithVoteThreshold(genreId, page, 5000);
+            if (response != null && response.getResults() != null && !response.getResults().isEmpty()) {
+                return response;
             }
 
-            return response != null ? response : getMockSearchResults("Top Rated Movie");
+            return fetchTopRatedWithVoteThreshold(genreId, page, 1000);
         } catch (Exception e) {
-            log.error("Failed to fetch top-rated movies from TMDB (genreId={}): {}", genreId, e.getMessage());
-            return getMockSearchResults("Top Rated Movie");
+            log.error("Failed to fetch top rated movies by genre {}: {}", genreId, e.getMessage());
+            return getMockSearchResults("Masterpiece");
         }
     }
 
     private TmdbMovieListResponse fetchTopRatedWithVoteThreshold(Integer genreId, int page, int minVotes) {
-        if (genreId != null && genreId > 0) {
-            log.info("Fetching TMDB top-rated movies by genreId={}, page={} (min {} votes)", genreId, page, minVotes);
-            return restClient.get()
-                    .uri(baseUrl + "/discover/movie?api_key={apiKey}&language=ko-KR&sort_by=vote_average.desc&vote_count.gte={minVotes}&with_genres={genreId}&page={page}", 
-                         apiKey, minVotes, genreId, page)
-                    .retrieve()
-                    .body(TmdbMovieListResponse.class);
-        } else {
-            log.info("Fetching TMDB top-rated movies for all categories, page={} (min {} votes)", page, minVotes);
-            return restClient.get()
-                    .uri(baseUrl + "/discover/movie?api_key={apiKey}&language=ko-KR&sort_by=vote_average.desc&vote_count.gte={minVotes}&page={page}", 
-                         apiKey, minVotes, page)
-                    .retrieve()
-                    .body(TmdbMovieListResponse.class);
-        }
+        String uri = (genreId == null || genreId == 0)
+                ? String.format("%s/discover/movie?api_key=%s&language=ko-KR&sort_by=vote_average.desc&vote_count.gte=%d&page=%d", baseUrl, apiKey, minVotes, page)
+                : String.format("%s/discover/movie?api_key=%s&language=ko-KR&sort_by=vote_average.desc&vote_count.gte=%d&with_genres=%d&page=%d", baseUrl, apiKey, minVotes, genreId, page);
+
+        return restClient.get()
+                .uri(uri)
+                .retrieve()
+                .body(TmdbMovieListResponse.class);
     }
 
-    public TmdbMovieListResponse searchMovieByTitleAndYear(String query, String openDt, int page) {
+    public TmdbMovieListResponse searchMovieByTitleAndYear(String query, String releaseYear, int page) {
         if (isInvalidApiKey()) {
             return getMockSearchResults(query);
         }
 
-        String year = (openDt != null && openDt.length() >= 4) ? openDt.substring(0, 4) : "";
-
         try {
-            if (!year.isBlank()) {
+            if (releaseYear != null && releaseYear.length() >= 4) {
+                String year = releaseYear.substring(0, 4);
                 TmdbMovieListResponse yearMatch = restClient.get()
-                        .uri(baseUrl + "/search/movie?api_key={apiKey}&language=ko-KR&query={query}&primary_release_year={year}&page={page}", 
-                             apiKey, query, year, page)
+                        .uri(baseUrl + "/search/movie?api_key={apiKey}&language=ko-KR&query={query}&primary_release_year={year}&page={page}", apiKey, query, year, page)
                         .retrieve()
                         .body(TmdbMovieListResponse.class);
 
@@ -139,18 +128,35 @@ public class TmdbApiClient {
 
     public TmdbCreditsResponse getMovieCredits(Long movieId) {
         if (isInvalidApiKey()) {
-            return TmdbCreditsResponse.builder().id(movieId).cast(List.of()).build();
+            return getMockMovieCredits(movieId);
         }
 
         try {
-            return restClient.get()
+            TmdbCreditsResponse res = restClient.get()
                     .uri(baseUrl + "/movie/{movieId}/credits?api_key={apiKey}&language=ko-KR", movieId, apiKey)
                     .retrieve()
                     .body(TmdbCreditsResponse.class);
+
+            if (res != null && res.getCast() != null && !res.getCast().isEmpty()) {
+                return res;
+            }
         } catch (Exception e) {
             log.error("Failed to fetch movie credits for TMDB ID {}: {}", movieId, e.getMessage());
-            return TmdbCreditsResponse.builder().id(movieId).cast(List.of()).build();
         }
+
+        return getMockMovieCredits(movieId);
+    }
+
+    private TmdbCreditsResponse getMockMovieCredits(Long movieId) {
+        return TmdbCreditsResponse.builder()
+                .id(movieId)
+                .cast(List.of(
+                        TmdbCastDto.builder().id(101L).name("톰 행크스").character("주연 배우").profilePath("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop").build(),
+                        TmdbCastDto.builder().id(102L).name("엠마 스톤").character("주연 배우").profilePath("https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop").build(),
+                        TmdbCastDto.builder().id(103L).name("크리스토퍼 놀란").character("감독 / 출연").profilePath("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop").build(),
+                        TmdbCastDto.builder().id(104L).name("스칼렛 요한슨").character("조연 배우").profilePath("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop").build()
+                ))
+                .build();
     }
 
     private TmdbMovieListResponse getMockSearchResults(String query) {
