@@ -11,15 +11,15 @@ spring:
 tmdb:
   api:
     base-url: https://api.themoviedb.org/3
-    key: ${TMDB_API_KEY:YOUR_TMDB_API_KEY_HERE}
+    key: ${TMDB_API_KEY:335d351f298a859d0ea6f8b1808ae017}
 
 kobis:
   api:
     base-url: http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice
-    key: ${KOBIS_API_KEY:YOUR_KOBIS_API_KEY_HERE}
+    key: ${KOBIS_API_KEY:183da6c4fa3be1aadb21ae6ca7cdf1c0}
 
 jwt:
-  secret: ${JWT_SECRET:YOUR_SECURE_JWT_SECRET_KEY_HERE_MINIMUM_32_BYTES}
+  secret: ${JWT_SECRET:cineflix_secret_jwt_key_super_secure_random_string_2026_demo_project_key}
   expiration-ms: 86400000
 
 ---
