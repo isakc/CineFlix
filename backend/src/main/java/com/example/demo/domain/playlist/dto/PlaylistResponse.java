@@ -1,6 +1,7 @@
 package com.example.demo.domain.playlist.dto;
 
 import com.example.demo.domain.playlist.entity.Playlist;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +19,10 @@ public class PlaylistResponse {
     private String title;
     private String description;
     private String userIdentifier;
+
+    @JsonProperty("isPublic")
     private boolean isPublic;
+
     private List<PlaylistItemResponse> items;
     private int itemCount;
     private LocalDateTime createdAt;

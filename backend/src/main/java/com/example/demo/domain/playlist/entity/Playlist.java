@@ -1,5 +1,6 @@
 package com.example.demo.domain.playlist.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,6 +32,7 @@ public class Playlist {
     @Column(nullable = false)
     private String userIdentifier;
 
+    @JsonProperty("isPublic")
     @Builder.Default
     private boolean isPublic = true;
 

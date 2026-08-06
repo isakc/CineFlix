@@ -1,5 +1,7 @@
 package com.example.demo.domain.playlist.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -26,6 +28,8 @@ public class PlaylistCreateRequest {
     private String description;
 
     @Schema(description = "공개 여부", example = "true")
+    @JsonProperty("isPublic")
+    @JsonAlias({"public", "is_public"})
     @Builder.Default
     private boolean isPublic = true;
 }
