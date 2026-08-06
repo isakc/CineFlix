@@ -1,0 +1,31 @@
+package com.example.demo.domain.playlist.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Schema(description = "영화 플레이리스트 생성 요청 DTO")
+public class PlaylistCreateRequest {
+
+    @Schema(description = "사용자 식별자(닉네임 또는 게스트ID)", example = "무비마스터")
+    @NotBlank
+    private String userIdentifier;
+
+    @Schema(description = "플레이리스트 제목", example = "🌧️ 비 오는 날 밤 혼자 보기 좋은 명작 SF")
+    @NotBlank
+    private String title;
+
+    @Schema(description = "플레이리스트 설명", example = "잔잔하고 몰입감 넘치는 분위기 있는 영화 컬렉션 모음")
+    private String description;
+
+    @Schema(description = "공개 여부", example = "true")
+    @Builder.Default
+    private boolean isPublic = true;
+}

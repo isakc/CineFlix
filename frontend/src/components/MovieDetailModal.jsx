@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiUrl } from '../config/api';
 
-export default function MovieDetailModal({ movie, user, onClose }) {
+export default function MovieDetailModal({ movie, user, userIdentifier, onClose }) {
   const [movieDetails, setMovieDetails] = useState(movie || {});
   const [reviews, setReviews] = useState([]);
   const [ratingSummary, setRatingSummary] = useState({ averageRating: 0, totalReviewCount: 0 });
@@ -9,6 +9,12 @@ export default function MovieDetailModal({ movie, user, onClose }) {
   const [rating, setRating] = useState(5.0);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Playlist Add state
+  const [playlists, setPlaylists] = useState([]);
+  const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
+  const [addingToPlaylist, setAddingToPlaylist] = useState(false);
+  const [addMessage, setAddMessage] = useState('');
 
   const targetMovie = movieDetails || movie || {};
   const rawPoster = targetMovie.poster_path || targetMovie.posterPath || '';
@@ -28,6 +34,49 @@ export default function MovieDetailModal({ movie, user, onClose }) {
       fetchRatingSummary(movie.id);
     }
   }, [movie]);
+
+  const fetchUserPlaylists = async () => {
+    if (!userIdentifier) return;
+    try {
+      const res = await fetch(apiUrl(`/api/playlists/user?userIdentifier=${encodeURIComponent(userIdentifier)}`));
+      if (res.ok) {
+        const data = await res.json();
+        setPlaylists(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch user playlists:', err);
+    }
+  };
+
+  const handleOpenPlaylistPicker = () => {
+    fetchUserPlaylists();
+    setShowPlaylistPicker(!showPlaylistPicker);
+  };
+
+  const handleAddToPlaylist = async (playlistId) => {
+    setAddingToPlaylist(true);
+    try {
+      const res = await fetch(apiUrl(`/api/playlists/${playlistId}/movies`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tmdbMovieId: targetMovie.id,
+          movieTitle: (targetMovie.title || '').replace(/^([🥇🥈🥉]|\d+위|\s|\.)+/g, '').trim(),
+          posterPath: rawPoster
+        })
+      });
+
+      if (res.ok) {
+        setAddMessage('✅ 플레이리스트에 담겼습니다!');
+        setTimeout(() => setAddMessage(''), 2500);
+        setShowPlaylistPicker(false);
+      }
+    } catch (err) {
+      console.error('Failed to add movie to playlist:', err);
+    } finally {
+      setAddingToPlaylist(false);
+    }
+  };
 
   const fetchMovieDetails = async (movieId) => {
     try {
@@ -120,21 +169,95 @@ export default function MovieDetailModal({ movie, user, onClose }) {
               <span>TMDB 평점: ★ {targetMovie.vote_average || targetMovie.voteAverage ? Number(targetMovie.vote_average || targetMovie.voteAverage).toFixed(1) : '0.0'}</span>
             </div>
 
-            <div style={{
-              background: 'rgba(255, 193, 7, 0.1)',
-              border: '1px solid rgba(255, 193, 7, 0.3)',
-              padding: '12px 18px',
-              borderRadius: '12px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <span style={{ fontSize: '1.5rem', color: 'var(--accent-gold)' }}>★ {ratingSummary.averageRating}</span>
-              <span style={{ color: 'var(--text-secondary)' }}>
-                커뮤니티 유저 평점 ({ratingSummary.totalReviewCount}개의 리뷰)
-              </span>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
+              <div style={{
+                background: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid rgba(255, 193, 7, 0.3)',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <span style={{ fontSize: '1.4rem', color: 'var(--accent-gold)' }}>★ {ratingSummary.averageRating}</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+                  유저 평점 ({ratingSummary.totalReviewCount}개 리뷰)
+                </span>
+              </div>
+
+              <button
+                onClick={handleOpenPlaylistPicker}
+                style={{
+                  background: 'rgba(255, 193, 7, 0.15)',
+                  color: 'var(--accent-gold)',
+                  border: '1px solid var(--accent-gold)',
+                  borderRadius: '12px',
+                  padding: '10px 18px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>🎵</span>
+                <span>내 리스트에 담기</span>
+              </button>
+
+              {addMessage && (
+                <span style={{ color: '#4CAF50', fontWeight: '700', fontSize: '0.9rem' }}>
+                  {addMessage}
+                </span>
+              )}
             </div>
+
+            {/* Playlist Picker Dropdown */}
+            {showPlaylistPicker && (
+              <div style={{
+                background: 'rgba(20, 20, 30, 0.95)',
+                border: '1px solid var(--accent-gold)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ fontWeight: '700', marginBottom: '10px', color: '#fff', fontSize: '0.9rem' }}>
+                  📂 담을 플레이리스트 선택:
+                </div>
+                {playlists.length === 0 ? (
+                  <div style={{ fontSize: '0.85rem', color: '#AAA' }}>
+                    등록된 플레이리스트가 없습니다. 상단 [🎵 영화 리스트] 메뉴에서 먼저 새 리스트를 생성해 보세요!
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {playlists.map((pl) => (
+                      <button
+                        key={pl.id}
+                        onClick={() => handleAddToPlaylist(pl.id)}
+                        disabled={addingToPlaylist}
+                        style={{
+                          background: 'rgba(255,255,255,0.08)',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          fontWeight: '600',
+                          fontSize: '0.85rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <span>🎬 {pl.title}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)' }}>+ 담기</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <p style={{ lineHeight: '1.7', color: '#D1D5DB', marginBottom: '24px' }}>
               {targetMovie.overview || '줄거리 정보가 없습니다.'}

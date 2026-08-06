@@ -9,6 +9,7 @@ export default function Navbar({
   viewMode,
   wishlistCount,
   onOpenWishlist,
+  onOpenPlaylist,
   user,
   onOpenAuth,
   onLogout
@@ -30,6 +31,19 @@ export default function Navbar({
       </form>
 
       <div className="nav-actions">
+        <button
+          className="btn-wishlist"
+          onClick={onOpenPlaylist}
+          style={{
+            background: 'rgba(255, 193, 7, 0.12)',
+            color: 'var(--accent-gold)',
+            borderColor: 'var(--accent-gold)',
+            fontWeight: '700'
+          }}
+        >
+          🎵 영화 리스트
+        </button>
+
         <button
           className={`btn-wishlist ${viewMode === 'news' ? 'active' : ''}`}
           onClick={onGoNews}

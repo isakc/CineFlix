@@ -6,6 +6,7 @@ import WishlistDrawer from "./components/WishlistDrawer";
 import AuthModal from "./components/AuthModal";
 import TopRatedCategorySection from "./components/TopRatedCategorySection";
 import MovieNewsSection from "./components/MovieNewsSection";
+import PlaylistModal from "./components/PlaylistModal";
 import { apiUrl } from "./config/api";
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
   const [wishlists, setWishlists] = useState([]);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("cineflix_user");
     if (savedUser) {
@@ -210,6 +212,7 @@ export default function App() {
         viewMode={viewMode}
         wishlistCount={safeWishlists.length}
         onOpenWishlist={() => setIsWishlistOpen(true)}
+        onOpenPlaylist={() => setIsPlaylistOpen(true)}
         user={user}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={handleLogout}
@@ -348,6 +351,7 @@ export default function App() {
         <MovieDetailModal
           movie={selectedMovie}
           user={user}
+          userIdentifier={getUserIdentifier()}
           onClose={() => setSelectedMovie(null)}
         />
       )}
@@ -364,6 +368,14 @@ export default function App() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+      />
+
+      <PlaylistModal
+        isOpen={isPlaylistOpen}
+        onClose={() => setIsPlaylistOpen(false)}
+        userIdentifier={getUserIdentifier()}
+        user={user}
+        onMovieClick={setSelectedMovie}
       />
     </div>
   );
