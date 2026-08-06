@@ -35,7 +35,7 @@ export default function WishlistDrawer({ isOpen, onClose, wishlists, onRemoveWis
                 }}
               >
                 <img
-                  src={w.posterPath ? (w.posterPath.startsWith('http') ? w.posterPath : `https://image.tmdb.org/t/p/w200${w.posterPath}`) : 'https://via.placeholder.com/100'}
+                  src={w.posterPath ? (w.posterPath.startsWith('http') ? w.posterPath : `https://image.tmdb.org/t/p/w200${w.posterPath.startsWith('/') ? w.posterPath : '/' + w.posterPath}`) : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=200&auto=format&fit=crop'}
                   alt={w.movieTitle}
                   style={{ width: '50px', height: '70px', borderRadius: '8px', objectFit: 'cover' }}
                 />

@@ -18,9 +18,9 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose 
 
   const targetMovie = movieDetails || movie || {};
   const rawPoster = targetMovie.poster_path || targetMovie.posterPath || '';
-  const posterUrl = rawPoster
-    ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w500${rawPoster}`)
-    : 'https://via.placeholder.com/500x750?text=No+Poster';
+  const posterUrl = (rawPoster && typeof rawPoster === 'string' && rawPoster.length > 3)
+    ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w500${rawPoster.startsWith('/') ? rawPoster : '/' + rawPoster}`)
+    : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop';
 
   useEffect(() => {
     if (user) setAuthor(user.nickname);
