@@ -88,7 +88,7 @@ export default function PlaylistModal({
   };
 
   const handleDeletePlaylist = async (playlistId) => {
-    if (!window.confirm('정말로 이 플레이리스트를 삭제하시겠습니까?')) return;
+    if (!window.confirm('정말로 이 영화 리스트를 삭제하시겠습니까?')) return;
     try {
       const res = await fetch(apiUrl(`/api/playlists/${playlistId}?userIdentifier=${encodeURIComponent(userIdentifier)}`), {
         method: 'DELETE'
@@ -139,10 +139,10 @@ export default function PlaylistModal({
         {/* Header & Close */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.8rem' }}>🎵</span>
+            <span style={{ fontSize: '1.8rem' }}>🎬</span>
             <div>
               <h2 style={{ fontSize: '1.6rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
-                나만의 시네마 리스트 (Movie Playlist)
+                나만의 시네마 리스트 (Cinema Collection)
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: 0 }}>
                 취향 저격 테마 컬렉션을 만들고 다른 사람들과 멋진 영화 리스트를 공유해보세요!
@@ -281,7 +281,7 @@ export default function PlaylistModal({
 
             {!selectedPlaylist.items || selectedPlaylist.items.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                이 플레이리스트에 아직 담긴 영화가 없습니다.<br />영화 상세 페이지에서 [➕ 리스트에 추가] 버튼을 눌러보세요!
+                이 영화 리스트에 아직 담긴 영화가 없습니다.<br />영화 상세 페이지에서 [➕ 리스트에 추가] 버튼을 눌러보세요!
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '16px' }}>
@@ -354,7 +354,7 @@ export default function PlaylistModal({
           <form onSubmit={handleCreatePlaylist} style={{ padding: '10px 0' }}>
             <div style={{ marginBottom: '18px' }}>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: '700', fontSize: '0.9rem' }}>
-                📌 플레이리스트 제목
+                📌 리스트 제목
               </label>
               <input
                 type="text"
@@ -405,7 +405,7 @@ export default function PlaylistModal({
                 style={{ width: '18px', height: '18px', cursor: 'pointer' }}
               />
               <label htmlFor="isPublicCheck" style={{ cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600' }}>
-                🌍 공개 플레이리스트로 등록 (모두의 시네마 리스트 탭에 공유됩니다)
+                🌍 공개 리스트로 등록 (모두의 시네마 리스트 탭에 공유됩니다)
               </label>
             </div>
 
@@ -421,7 +421,7 @@ export default function PlaylistModal({
                 fontWeight: '700'
               }}
             >
-              {creating ? '플레이리스트 생성 중...' : '🎬 나만의 영화 리스트 만들기'}
+              {creating ? '리스트 생성 중...' : '🎬 나만의 영화 리스트 만들기'}
             </button>
           </form>
         ) : (
@@ -432,7 +432,7 @@ export default function PlaylistModal({
               </div>
             ) : (activeTab === 'public' ? publicPlaylists : myPlaylists).length === 0 ? (
               <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-secondary)' }}>
-                {activeTab === 'public' ? '등록된 공개 플레이리스트가 없습니다.' : '내가 만든 플레이리스트가 없습니다. [➕ 새 리스트 만들기] 버튼을 눌러보세요!'}
+                {activeTab === 'public' ? '등록된 공개 영화 리스트가 없습니다.' : '내가 만든 영화 리스트가 없습니다. [➕ 새 리스트 만들기] 버튼을 눌러보세요!'}
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '18px' }}>

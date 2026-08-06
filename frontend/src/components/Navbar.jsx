@@ -41,7 +41,7 @@ export default function Navbar({
             fontWeight: '700'
           }}
         >
-          🎵 영화 리스트
+          🎬 영화 리스트
         </button>
 
         <button

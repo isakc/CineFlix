@@ -201,7 +201,7 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose 
                   gap: '6px'
                 }}
               >
-                <span>🎵</span>
+                <span>🎬</span>
                 <span>내 리스트에 담기</span>
               </button>
 
