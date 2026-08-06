@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
 
+const DEFAULT_BLANK_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24"><rect width="100%" height="100%" fill="%231A1B26"/><circle cx="12" cy="8" r="4" fill="%23787C99"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" fill="%23787C99"/></svg>`;
+
 export default function MovieDetailPage({ user, userIdentifier }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -366,20 +368,20 @@ export default function MovieDetailPage({ user, userIdentifier }) {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(135px, 1fr))',
             gap: '18px'
           }}>
-            {castList.map((actor) => {
+            {castList.map((actor, idx) => {
               const rawActorPhoto = actor.profile_path || actor.profilePath;
               const actorPhoto = (rawActorPhoto && typeof rawActorPhoto === 'string' && rawActorPhoto.length > 3)
                 ? (rawActorPhoto.startsWith('http')
                   ? rawActorPhoto
                   : `https://image.tmdb.org/t/p/w185${rawActorPhoto.startsWith('/') ? rawActorPhoto : '/' + rawActorPhoto}`)
-                : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop';
+                : DEFAULT_BLANK_AVATAR;
 
               return (
                 <div
-                  key={actor.id || actor.name}
+                  key={actor.id || actor.name || idx}
                   className="glass"
                   style={{
                     borderRadius: '14px',
@@ -392,7 +394,7 @@ export default function MovieDetailPage({ user, userIdentifier }) {
                   <img
                     src={actorPhoto}
                     alt={actor.name}
-                    style={{ width: '100%', height: '160px', objectFit: 'cover', display: 'block' }}
+                    style={{ width: '100%', height: '165px', objectFit: 'cover', display: 'block' }}
                   />
                   <div style={{ padding: '12px 8px', background: 'rgba(0, 0, 0, 0.4)' }}>
                     <div style={{ fontWeight: '800', fontSize: '0.92rem', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '4px' }}>
