@@ -394,12 +394,12 @@ export default function MovieDetailPage({ user, userIdentifier }) {
                     alt={actor.name}
                     style={{ width: '100%', height: '160px', objectFit: 'cover', display: 'block' }}
                   />
-                  <div style={{ padding: '10px 8px' }}>
-                    <div style={{ fontWeight: '700', fontSize: '0.88rem', color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ padding: '12px 8px', background: 'rgba(0, 0, 0, 0.4)' }}>
+                    <div style={{ fontWeight: '800', fontSize: '0.92rem', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '4px' }}>
                       {actor.name}
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {actor.character ? `${actor.character} 역` : '출연'}
+                    <div style={{ fontSize: '0.82rem', color: '#FFD700', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {actor.character ? actor.character.replace(/\s*역$/g, '').trim() : '출연'}
                     </div>
                   </div>
                 </div>
