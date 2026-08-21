@@ -4,6 +4,8 @@ import com.example.demo.domain.movie.dto.TmdbCastDto;
 import com.example.demo.domain.movie.dto.TmdbCreditsResponse;
 import com.example.demo.domain.movie.dto.TmdbMovieDto;
 import com.example.demo.domain.movie.dto.TmdbMovieListResponse;
+import com.example.demo.domain.movie.dto.TmdbVideoDto;
+import com.example.demo.domain.movie.dto.TmdbVideoListResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -145,6 +147,73 @@ public class TmdbApiClient {
         }
 
         return getMockMovieCredits(movieId);
+    }
+
+    public TmdbVideoListResponse getMovieVideos(Long movieId) {
+        if (isInvalidApiKey()) {
+            return getMockMovieVideos(movieId);
+        }
+
+        try {
+            // First try Korean locale videos
+            TmdbVideoListResponse koRes = restClient.get()
+                    .uri(baseUrl + "/movie/{movieId}/videos?api_key={apiKey}&language=ko-KR", movieId, apiKey)
+                    .retrieve()
+                    .body(TmdbVideoListResponse.class);
+
+            if (koRes != null && koRes.getResults() != null && !koRes.getResults().isEmpty()) {
+                return koRes;
+            }
+
+            // Fallback to default/en-US videos
+            TmdbVideoListResponse enRes = restClient.get()
+                    .uri(baseUrl + "/movie/{movieId}/videos?api_key={apiKey}", movieId, apiKey)
+                    .retrieve()
+                    .body(TmdbVideoListResponse.class);
+
+            if (enRes != null && enRes.getResults() != null && !enRes.getResults().isEmpty()) {
+                return enRes;
+            }
+        } catch (Exception e) {
+            log.error("Failed to fetch movie videos for TMDB ID {}: {}", movieId, e.getMessage());
+        }
+
+        return getMockMovieVideos(movieId);
+    }
+
+    private TmdbVideoListResponse getMockMovieVideos(Long movieId) {
+        String videoKey = "zSWdZVtXT7E"; // Interstellar main trailer default
+        String videoName = "공식 메인 예고편";
+
+        if (movieId != null) {
+            if (movieId == 1022789L) {
+                videoKey = "L4DrolmDx4o"; // Inside Out 2
+                videoName = "인사이드 아웃 2 메인 예고편";
+            } else if (movieId == 1184918L) {
+                videoKey = "67vbA5ZJb3s"; // Wild Robot
+                videoName = "와일드 로봇 공식 예고편";
+            } else if (movieId == 939243L) {
+                videoKey = "qSu6i2iFMO0"; // Sonic 3
+                videoName = "수퍼 소닉 3 공식 예고편";
+            } else if (movieId == 550L) {
+                videoKey = "qtRKDV93JU8"; // Fight Club
+                videoName = "파이트 클럽 공식 예고편";
+            }
+        }
+
+        return TmdbVideoListResponse.builder()
+                .id(movieId)
+                .results(List.of(
+                        TmdbVideoDto.builder()
+                                .id("mock-video-1")
+                                .name(videoName)
+                                .key(videoKey)
+                                .site("YouTube")
+                                .type("Trailer")
+                                .official(true)
+                                .build()
+                ))
+                .build();
     }
 
     private TmdbCreditsResponse getMockMovieCredits(Long movieId) {

@@ -7,6 +7,7 @@ import com.example.demo.domain.movie.dto.KobisBoxOfficeResponse;
 import com.example.demo.domain.movie.dto.KobisDailyBoxOfficeDto;
 import com.example.demo.domain.movie.dto.TmdbMovieDto;
 import com.example.demo.domain.movie.dto.TmdbMovieListResponse;
+import com.example.demo.domain.movie.dto.TmdbVideoListResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -184,6 +185,10 @@ public class MovieService {
 
     public com.example.demo.domain.movie.dto.TmdbCreditsResponse getMovieCredits(Long movieId) {
         return tmdbApiClient.getMovieCredits(movieId);
+    }
+
+    public TmdbVideoListResponse getMovieVideos(Long movieId) {
+        return tmdbApiClient.getMovieVideos(movieId);
     }
 
     public TmdbMovieListResponse getRecommendedMovies(String userIdentifier) {

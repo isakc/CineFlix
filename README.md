@@ -61,7 +61,11 @@ CineFlix는 Spring Boot 백엔드와 React(Vite) 프론트엔드를 기반으로
    - React Router DOM 기반의 URL 공유 및 dynamic 페이지 전환 지원 (`/movie/:id`, `/news`, `/wishlist` 등)
    - CineFlix 전용 필름 릴 SVG 파비콘(Favicon) 및 브라우저 탭 타이틀 적용
 
-7. **🔐 회원 인증 (Spring Security + JWT)**
+7. **🎥 유튜브 공식 예고편(트레일러) 실시간 모달 재생**
+   - 영화 상세 페이지 및 모달에서 `▶ 공식 예고편 재생` 원클릭 감상
+   - TMDB Video API 연동 공식 한국어/글로벌 YouTube 트레일러 자동 매칭 및 16:9 반응형 시네마 뷰어 제공
+
+8. **🔐 회원 인증 (Spring Security + JWT)**
    - 회원가입 및 로그인 기능
    - JWT 토큰 기반의 세션 없는 (Stateless) 인증 처리
 

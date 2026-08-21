@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
+import TrailerModal from '../components/TrailerModal';
 
 const DEFAULT_BLANK_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24"><rect width="100%" height="100%" fill="%231A1B26"/><circle cx="12" cy="8" r="4" fill="%23787C99"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" fill="%23787C99"/></svg>`;
 
@@ -13,6 +14,7 @@ export default function MovieDetailPage({ user, userIdentifier }) {
   const [reviews, setReviews] = useState([]);
   const [ratingSummary, setRatingSummary] = useState({ averageRating: 0, totalReviewCount: 0 });
   const [loading, setLoading] = useState(true);
+  const [isTrailerOpen, setIsTrailerOpen] = useState(false);
 
   // Review Form
   const [author, setAuthor] = useState(user ? user.nickname : '');
@@ -272,6 +274,30 @@ export default function MovieDetailPage({ user, userIdentifier }) {
               </div>
 
               <button
+                onClick={() => setIsTrailerOpen(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #e50914, #b20710)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '16px',
+                  padding: '12px 24px',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 6px 20px rgba(229, 9, 20, 0.45)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.04)')}
+                onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              >
+                <span style={{ fontSize: '1.1rem' }}>▶</span>
+                <span>공식 예고편 재생</span>
+              </button>
+
+              <button
                 onClick={handleOpenPlaylistPicker}
                 style={{
                   background: 'rgba(255, 193, 7, 0.18)',
@@ -483,6 +509,14 @@ export default function MovieDetailPage({ user, userIdentifier }) {
           </div>
         )}
       </section>
+
+      {/* Official YouTube Trailer Video Modal */}
+      <TrailerModal
+        isOpen={isTrailerOpen}
+        onClose={() => setIsTrailerOpen(false)}
+        movieId={movie.id}
+        movieTitle={movie.title}
+      />
     </div>
   );
 }

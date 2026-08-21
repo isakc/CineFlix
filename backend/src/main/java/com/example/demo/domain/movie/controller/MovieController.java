@@ -60,6 +60,13 @@ public class MovieController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "영화 예고편(트레일러/비디오) 조회", description = "특정 TMDB 영화 ID로 공식 유튜브 예고편 및 티저 비디오 목록을 조회합니다.")
+    @GetMapping({"/{id}/videos", "/{id}/trailer"})
+    public ResponseEntity<com.example.demo.domain.movie.dto.TmdbVideoListResponse> getMovieVideos(@PathVariable Long id) {
+        com.example.demo.domain.movie.dto.TmdbVideoListResponse response = movieService.getMovieVideos(id);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "AI 사용자 맞춤 영화 추천", description = "사용자의 위시리스트 취향을 분석하여 맞춤 연관 영화 목록을 제공합니다.")
     @GetMapping("/recommendations")
     public ResponseEntity<TmdbMovieListResponse> getRecommendedMovies(
