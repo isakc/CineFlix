@@ -72,7 +72,7 @@ public class ReviewService {
     }
 
     public Page<ReviewResponse> getReviewsByMovieId(Long tmdbMovieId, Pageable pageable) {
-        return reviewRepository.findByTmdbMovieId(tmdbMovieId, pageable)
+        return reviewRepository.findByTmdbMovieIdWithContent(tmdbMovieId, pageable)
                 .map(ReviewResponse::new);
     }
 

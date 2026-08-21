@@ -792,29 +792,38 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
           </form>
         )}
 
-        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '16px' }}>💬 등록된 리뷰 목록 ({reviews.length})</h3>
-        {reviews.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', padding: '20px 0', textAlign: 'center' }}>
-            아직 등록된 리뷰가 없습니다. 첫 리뷰의 주인공이 되어보세요!
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {reviews.map((r) => (
-              <div key={r.id} style={{
-                background: 'rgba(255, 255, 255, 0.04)',
-                padding: '18px',
-                borderRadius: '14px',
-                border: '1px solid rgba(255, 255, 255, 0.05)'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '1rem' }}>{r.author}</span>
-                  <span style={{ color: 'var(--accent-gold)', fontWeight: '700' }}>★ {r.rating}</span>
+        {(() => {
+          const writtenReviews = reviews.filter((r) => r.content && r.content.trim().length > 0);
+          return (
+            <>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '16px' }}>
+                💬 등록된 리뷰 목록 ({writtenReviews.length})
+              </h3>
+              {writtenReviews.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', padding: '20px 0', textAlign: 'center' }}>
+                  아직 작성된 한줄평/리뷰가 없습니다. 첫 리뷰의 주인공이 되어보세요!
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {writtenReviews.map((r) => (
+                    <div key={r.id} style={{
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      padding: '18px',
+                      borderRadius: '14px',
+                      border: '1px solid rgba(255, 255, 255, 0.05)'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '1rem' }}>{r.author}</span>
+                        <span style={{ color: 'var(--accent-gold)', fontWeight: '700' }}>★ {r.rating}</span>
+                      </div>
+                      <p style={{ color: '#D1D5DB', fontSize: '0.96rem', margin: 0 }}>{r.content}</p>
+                    </div>
+                  ))}
                 </div>
-                <p style={{ color: '#D1D5DB', fontSize: '0.96rem', margin: 0 }}>{r.content}</p>
-              </div>
-            ))}
-          </div>
-        )}
+              )}
+            </>
+          );
+        })()}
       </section>
     </div>
   );
