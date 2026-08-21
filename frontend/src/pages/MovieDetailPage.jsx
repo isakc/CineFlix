@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
-import TrailerModal from '../components/TrailerModal';
 
 const DEFAULT_BLANK_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24"><rect width="100%" height="100%" fill="%231A1B26"/><circle cx="12" cy="8" r="4" fill="%23787C99"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" fill="%23787C99"/></svg>`;
 
@@ -13,8 +12,8 @@ export default function MovieDetailPage({ user, userIdentifier }) {
   const [castList, setCastList] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [ratingSummary, setRatingSummary] = useState({ averageRating: 0, totalReviewCount: 0 });
+  const [trailers, setTrailers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isTrailerOpen, setIsTrailerOpen] = useState(false);
 
   // Review Form
   const [author, setAuthor] = useState(user ? user.nickname : '');
@@ -36,10 +35,34 @@ export default function MovieDetailPage({ user, userIdentifier }) {
     if (id) {
       fetchMovieDetails(id);
       fetchMovieCredits(id);
+      fetchMovieTrailers(id);
       fetchReviews(id);
       fetchRatingSummary(id);
     }
   }, [id]);
+
+  const fetchMovieTrailers = async (movieId) => {
+    try {
+      const res = await fetch(apiUrl(`/api/movies/${movieId}/videos`));
+      if (res.ok) {
+        const data = await res.json();
+        const results = Array.isArray(data.results) ? data.results : [];
+        const ytVideos = results.filter(
+          (v) => (v.site || '').toLowerCase() === 'youtube' && v.key
+        );
+        ytVideos.sort((a, b) => {
+          const aIsTrailer = (a.type || '').toLowerCase() === 'trailer';
+          const bIsTrailer = (b.type || '').toLowerCase() === 'trailer';
+          if (aIsTrailer && !bIsTrailer) return -1;
+          if (!aIsTrailer && bIsTrailer) return 1;
+          return (b.official ? 1 : 0) - (a.official ? 1 : 0);
+        });
+        setTrailers(ytVideos);
+      }
+    } catch (err) {
+      console.error('Failed to fetch movie trailers:', err);
+    }
+  };
 
   const fetchMovieDetails = async (movieId) => {
     setLoading(true);
@@ -274,7 +297,16 @@ export default function MovieDetailPage({ user, userIdentifier }) {
               </div>
 
               <button
-                onClick={() => setIsTrailerOpen(true)}
+                onClick={() => {
+                  const trailerSection = document.getElementById('trailers-section');
+                  if (trailerSection) {
+                    trailerSection.scrollIntoView({ behavior: 'smooth' });
+                  } else if (trailers.length > 0) {
+                    window.open(`https://www.youtube.com/watch?v=${trailers[0].key}`, '_blank', 'noopener,noreferrer');
+                  } else {
+                    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent((movie.title || '') + ' 예고편')}`, '_blank', 'noopener,noreferrer');
+                  }
+                }}
                 style={{
                   background: 'linear-gradient(135deg, #e50914, #b20710)',
                   color: '#fff',
@@ -294,7 +326,7 @@ export default function MovieDetailPage({ user, userIdentifier }) {
                 onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               >
                 <span style={{ fontSize: '1.1rem' }}>▶</span>
-                <span>공식 예고편 재생</span>
+                <span>공식 예고편 ({trailers.length})</span>
               </button>
 
               <button
@@ -437,6 +469,172 @@ export default function MovieDetailPage({ user, userIdentifier }) {
         )}
       </section>
 
+      {/* Official YouTube Trailers & Videos Section */}
+      <section id="trailers-section" style={{ marginBottom: '40px' }}>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span>🎞️</span>
+          <span>공식 예고편 및 관련 영상 ({trailers.length})</span>
+        </h2>
+
+        {trailers.length === 0 ? (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            borderRadius: '16px',
+            padding: '30px',
+            textAlign: 'center',
+            border: '1px solid rgba(255, 255, 255, 0.06)'
+          }}>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '14px' }}>
+              등록된 공식 영상이 없습니다. YouTube에서 검색해 보세요!
+            </p>
+            <a
+              href={`https://www.youtube.com/results?search_query=${encodeURIComponent((movie.title || '') + ' 예고편')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: 'linear-gradient(135deg, #e50914, #b20710)',
+                color: '#fff',
+                padding: '10px 20px',
+                borderRadius: '12px',
+                textDecoration: 'none',
+                fontWeight: '700',
+                fontSize: '0.9rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <span>▶ YouTube에서 '{movie.title}' 예고편 검색</span>
+            </a>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '20px'
+          }}>
+            {trailers.map((vid) => {
+              const ytUrl = `https://www.youtube.com/watch?v=${vid.key}`;
+              const thumbUrl = `https://img.youtube.com/vi/${vid.key}/hqdefault.jpg`;
+
+              return (
+                <a
+                  key={vid.id || vid.key}
+                  href={ytUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="glass"
+                  style={{
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'all 0.25s ease',
+                    position: 'relative'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-6px)';
+                    e.currentTarget.style.borderColor = '#e50914';
+                    e.currentTarget.style.boxShadow = '0 12px 28px rgba(229, 9, 20, 0.35)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  {/* Thumbnail Image Container */}
+                  <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', background: '#000', overflow: 'hidden' }}>
+                    <img
+                      src={thumbUrl}
+                      alt={vid.name}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                      loading="lazy"
+                    />
+
+                    {/* Red Play Button Icon Overlay */}
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(0, 0, 0, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <div style={{
+                        width: '52px',
+                        height: '52px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #e50914, #b20710)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontSize: '1.3rem',
+                        boxShadow: '0 4px 18px rgba(0,0,0,0.6)',
+                        border: '2px solid rgba(255,255,255,0.3)'
+                      }}>
+                        ▶
+                      </div>
+                    </div>
+
+                    {/* Badge: Trailer Type */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '10px',
+                      left: '10px',
+                      background: 'rgba(0,0,0,0.8)',
+                      backdropFilter: 'blur(6px)',
+                      color: '#fff',
+                      fontSize: '0.75rem',
+                      fontWeight: '800',
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                      {vid.type || '예고편'}
+                    </div>
+                  </div>
+
+                  {/* Video Title & YouTube Direct Link Footer */}
+                  <div style={{ padding: '14px 16px', background: 'rgba(15, 15, 22, 0.95)', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{
+                      fontWeight: '700',
+                      fontSize: '0.92rem',
+                      color: '#fff',
+                      lineHeight: '1.4',
+                      marginBottom: '10px',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }}>
+                      {vid.name}
+                    </div>
+                    <div style={{ fontSize: '0.82rem', color: '#FF4B55', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>▶ YouTube에서 시청하기 ↗</span>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       {/* Community Reviews Section */}
       <section className="glass" style={{ borderRadius: '24px', padding: '32px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>✍️ 커뮤니티 리뷰 & 별점</h2>
@@ -509,14 +707,6 @@ export default function MovieDetailPage({ user, userIdentifier }) {
           </div>
         )}
       </section>
-
-      {/* Official YouTube Trailer Video Modal */}
-      <TrailerModal
-        isOpen={isTrailerOpen}
-        onClose={() => setIsTrailerOpen(false)}
-        movieId={movie.id}
-        movieTitle={movie.title}
-      />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { apiUrl } from '../config/api';
-import TrailerModal from './TrailerModal';
 
 export default function MovieDetailModal({ movie, user, userIdentifier, onClose }) {
   const [movieDetails, setMovieDetails] = useState(movie || {});
@@ -10,7 +9,6 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose 
   const [rating, setRating] = useState(5.0);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isTrailerOpen, setIsTrailerOpen] = useState(false);
 
   // Playlist Add state
   const [playlists, setPlaylists] = useState([]);
@@ -188,7 +186,13 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose 
               </div>
 
               <button
-                onClick={() => setIsTrailerOpen(true)}
+                onClick={() => {
+                  window.open(
+                    `https://www.youtube.com/results?search_query=${encodeURIComponent((targetMovie.title || '') + ' 예고편')}`,
+                    '_blank',
+                    'noopener,noreferrer'
+                  );
+                }}
                 style={{
                   background: 'linear-gradient(135deg, #e50914, #b20710)',
                   color: '#fff',
@@ -208,7 +212,7 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose 
                 onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               >
                 <span>▶</span>
-                <span>예고편 감상</span>
+                <span>유튜브 예고편 ↗</span>
               </button>
 
               <button
@@ -363,14 +367,6 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose 
           )}
         </div>
       </div>
-
-      {/* Trailer Modal */}
-      <TrailerModal
-        isOpen={isTrailerOpen}
-        onClose={() => setIsTrailerOpen(false)}
-        movieId={targetMovie.id}
-        movieTitle={targetMovie.title}
-      />
     </div>
   );
 }
