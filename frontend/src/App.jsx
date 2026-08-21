@@ -8,6 +8,8 @@ import TopRatedCategorySection from "./components/TopRatedCategorySection";
 import MovieNewsSection from "./components/MovieNewsSection";
 import PlaylistModal from "./components/PlaylistModal";
 import MovieDetailPage from "./pages/MovieDetailPage";
+import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/LoginPage";
 import { apiUrl } from "./config/api";
 
 function AppContent() {
@@ -372,6 +374,16 @@ function AppContent() {
               <MovieNewsSection />
             </div>
           }
+        />
+
+        <Route
+          path="/signup"
+          element={<SignupPage onAuthSuccess={handleAuthSuccess} />}
+        />
+
+        <Route
+          path="/login"
+          element={<LoginPage onAuthSuccess={handleAuthSuccess} />}
         />
       </Routes>
 

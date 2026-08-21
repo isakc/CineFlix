@@ -92,9 +92,35 @@ export default function Navbar({
             </button>
           </div>
         ) : (
-          <button className="btn-primary" onClick={onOpenAuth} style={{ padding: '8px 18px', fontSize: '0.9rem' }}>
-            🔑 로그인 / 가입
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              className="btn-wishlist"
+              onClick={() => navigate('/login')}
+              style={{
+                padding: '8px 14px',
+                fontSize: '0.88rem',
+                background: 'rgba(255, 255, 255, 0.08)',
+                color: '#E2E8F0',
+                fontWeight: '700',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}
+            >
+              🔑 로그인
+            </button>
+            <button
+              className="btn-primary"
+              onClick={() => navigate('/signup')}
+              style={{
+                padding: '8px 16px',
+                fontSize: '0.88rem',
+                fontWeight: '800',
+                borderRadius: '20px'
+              }}
+            >
+              ✨ 회원가입
+            </button>
+          </div>
         )}
       </div>
     </nav>

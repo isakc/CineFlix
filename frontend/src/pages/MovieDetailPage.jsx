@@ -616,24 +616,41 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
             <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', marginBottom: '8px' }}>
               별점 및 리뷰 작성을 위해 로그인이 필요합니다
             </h3>
-            <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '22px', lineHeight: '1.6' }}>
-              로그인하시면 나만의 0.5점 단위 별점 평가와 솔직한 감상평을 기록하고 공유할 수 있습니다.
-            </p>
-            <button
-              onClick={onOpenAuth}
-              className="btn-primary"
-              style={{
-                padding: '12px 32px',
-                fontSize: '0.95rem',
-                fontWeight: '800',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <span>🔑</span>
-              <span>로그인 / 회원가입 하러가기</span>
-            </button>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => navigate('/signup')}
+                className="btn-primary"
+                style={{
+                  padding: '12px 28px',
+                  fontSize: '0.95rem',
+                  fontWeight: '800',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>✨</span>
+                <span>무료 회원가입</span>
+              </button>
+              <button
+                onClick={() => navigate('/login')}
+                className="btn-wishlist"
+                style={{
+                  padding: '12px 24px',
+                  fontSize: '0.95rem',
+                  fontWeight: '700',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#fff'
+                }}
+              >
+                <span>🔑</span>
+                <span>로그인</span>
+              </button>
+            </div>
           </div>
         ) : (
           <form className="review-form" onSubmit={handleSubmitReview} style={{ marginBottom: '32px' }}>

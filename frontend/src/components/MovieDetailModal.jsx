@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
 import StarRatingInput from './StarRatingInput';
 
 export default function MovieDetailModal({ movie, user, userIdentifier, onClose, onOpenAuth }) {
+  const navigate = useNavigate();
   const [movieDetails, setMovieDetails] = useState(movie || {});
   const [reviews, setReviews] = useState([]);
   const [ratingSummary, setRatingSummary] = useState({ averageRating: 0, totalReviewCount: 0 });
@@ -287,21 +289,47 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose,
               <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
                 로그인 후 0.5점 단위 별점과 솔직한 감상평을 남겨보세요!
               </p>
-              <button
-                onClick={onOpenAuth}
-                className="btn-primary"
-                style={{
-                  padding: '10px 24px',
-                  fontSize: '0.9rem',
-                  fontWeight: '700',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <span>🔑</span>
-                <span>로그인 / 회원가입</span>
-              </button>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => {
+                    onClose();
+                    navigate('/signup');
+                  }}
+                  className="btn-primary"
+                  style={{
+                    padding: '10px 20px',
+                    fontSize: '0.88rem',
+                    fontWeight: '800',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span>✨</span>
+                  <span>회원가입</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onClose();
+                    navigate('/login');
+                  }}
+                  className="btn-wishlist"
+                  style={{
+                    padding: '10px 18px',
+                    fontSize: '0.88rem',
+                    fontWeight: '700',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#fff'
+                  }}
+                >
+                  <span>🔑</span>
+                  <span>로그인</span>
+                </button>
+              </div>
             </div>
           ) : (
             <form className="review-form" onSubmit={handleSubmitReview}>
