@@ -1,18 +1,5 @@
 import React, { useState } from 'react';
 
-const RATING_LABELS = {
-  0.5: '최악이에요 😫',
-  1.0: '별로예요 🙁',
-  1.5: '재미없어요 🥱',
-  2.0: '조금 아쉬워요 😐',
-  2.5: '그저 그래요 🤔',
-  3.0: '보통이에요 🙂',
-  3.5: '볼만해요 😊',
-  4.0: '재밌어요 😄',
-  4.5: '훌륭해요 🤩',
-  5.0: '최고의 명작이에요! 🏆'
-};
-
 export default function StarRatingInput({ value = 0, onChange, size = 36, readOnly = false }) {
   const [hoverScore, setHoverScore] = useState(null);
 
@@ -42,7 +29,7 @@ export default function StarRatingInput({ value = 0, onChange, size = 36, readOn
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '14px' }}>
       {/* 5-Star Row */}
       <div
         onMouseLeave={handleMouseLeave}
@@ -59,13 +46,13 @@ export default function StarRatingInput({ value = 0, onChange, size = 36, readOn
         }}
       >
         {[1, 2, 3, 4, 5].map((starIndex) => {
-          let fill = 'rgba(255, 255, 255, 0.15)'; // Empty star color
+          let fill = 'rgba(255, 255, 255, 0.15)';
           const gradientId = `watcha-star-half-${starIndex}`;
 
           if (displayScore >= starIndex) {
-            fill = '#FFB800'; // Full star
+            fill = '#FFB800';
           } else if (displayScore >= starIndex - 0.5) {
-            fill = `url(#${gradientId})`; // Half star
+            fill = `url(#${gradientId})`;
           }
 
           return (
@@ -114,29 +101,18 @@ export default function StarRatingInput({ value = 0, onChange, size = 36, readOn
         })}
       </div>
 
-      {/* Dynamic Rating Score & Watcha Label */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span
-          style={{
-            fontSize: '1.3rem',
-            fontWeight: '900',
-            color: '#FFB800',
-            minWidth: '40px',
-            textAlign: 'center'
-          }}
-        >
-          {displayScore > 0 ? displayScore.toFixed(1) : '0.0'}
-        </span>
-        <span
-          style={{
-            fontSize: '0.92rem',
-            fontWeight: '700',
-            color: displayScore > 0 ? '#E2E8F0' : 'var(--text-secondary)'
-          }}
-        >
-          {RATING_LABELS[displayScore] || (displayScore > 0 ? '별점 평가' : '별점을 선택해 주세요 ⭐')}
-        </span>
-      </div>
+      {/* Clean Numerical Score Display */}
+      <span
+        style={{
+          fontSize: '1.25rem',
+          fontWeight: '900',
+          color: displayScore > 0 ? '#FFB800' : 'var(--text-secondary)',
+          minWidth: '42px',
+          textAlign: 'center'
+        }}
+      >
+        {displayScore > 0 ? displayScore.toFixed(1) : '0.0'}
+      </span>
     </div>
   );
 }

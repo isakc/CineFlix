@@ -1080,25 +1080,21 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
               <div
                 style={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
+                  justifyContent: 'center',
                   padding: '16px',
                   background: 'rgba(255, 255, 255, 0.03)',
                   borderRadius: '16px',
                   border: '1px solid rgba(255, 255, 255, 0.08)'
                 }}
               >
-                <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: '700' }}>
-                  별점을 다시 선택해 주세요 (0.5점 단위)
-                </div>
                 <StarRatingInput value={editRating} onChange={(newRating) => setEditRating(newRating)} size={38} />
               </div>
 
               <textarea
+                placeholder="감상평이나 리뷰를 입력해 보세요... (선택 사항)"
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={4}
-                required
                 style={{
                   width: '100%',
                   padding: '12px 16px',

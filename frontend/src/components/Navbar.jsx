@@ -67,10 +67,6 @@ export default function Navbar({
           📰 영화 뉴스
         </button>
 
-        <button className="btn-wishlist" onClick={onOpenWishlist}>
-          ❤️ 위시리스트 ({wishlistCount})
-        </button>
-
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button

@@ -151,8 +151,6 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose,
         })
       });
       if (res.ok) {
-        setRatingMessage(`✨ 별점 ${newRating.toFixed(1)}점이 즉시 저장되었습니다!`);
-        setTimeout(() => setRatingMessage(''), 2500);
         fetchReviews(targetMovie.id);
         fetchRatingSummary(targetMovie.id);
       }
@@ -192,8 +190,6 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose,
       });
 
       if (res.ok) {
-        setRatingMessage('✅ 리뷰와 별점이 성공적으로 저장되었습니다!');
-        setTimeout(() => setRatingMessage(''), 2500);
         fetchReviews(targetMovie.id);
         fetchRatingSummary(targetMovie.id);
       } else {
@@ -391,32 +387,14 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose,
               {/* Watcha-style 5-Star Rating Input */}
               <div style={{
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
+                justifyContent: 'center',
                 padding: '16px',
                 background: 'rgba(255, 255, 255, 0.03)',
                 borderRadius: '16px',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 marginBottom: '16px'
               }}>
-                <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: '700' }}>
-                  영화 별점을 평가해 주세요 (별점 클릭 시 즉시 저장 ⭐)
-                </div>
                 <StarRatingInput value={rating} onChange={handleRatingChange} size={38} />
-                {ratingMessage && (
-                  <div style={{
-                    color: 'var(--accent-gold)',
-                    fontSize: '0.88rem',
-                    fontWeight: '800',
-                    marginTop: '8px',
-                    background: 'rgba(255, 184, 0, 0.12)',
-                    padding: '4px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 184, 0, 0.3)'
-                  }}>
-                    {ratingMessage}
-                  </div>
-                )}
               </div>
 
               <div style={{ marginBottom: '12px', fontSize: '0.9rem', fontWeight: '700', color: '#E2E8F0' }}>
