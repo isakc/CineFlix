@@ -815,7 +815,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
             gap: '18px'
           }}>
             {trailers.slice(videoSlidePage * 4, (videoSlidePage + 1) * 4).map((vid) => {
@@ -997,7 +997,9 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
             {/* Slide Navigation Controls */}
             {(() => {
               const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
-              const totalPages = Math.ceil(currentList.length / 4);
+              const isPosterTab = activeGalleryTab === 'posters';
+              const itemsPerPage = isPosterTab ? 5 : 4;
+              const totalPages = Math.ceil(currentList.length / itemsPerPage);
               if (totalPages <= 1) return null;
 
               return (
@@ -1056,15 +1058,16 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
         </div>
 
         {loadingGallery ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="card-skeleton" style={{ height: '170px', borderRadius: '16px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: activeGalleryTab === 'posters' ? 'repeat(5, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))', gap: '16px' }}>
+            {[...Array(activeGalleryTab === 'posters' ? 5 : 4)].map((_, i) => (
+              <div key={i} className="card-skeleton" style={{ height: activeGalleryTab === 'posters' ? '280px' : '170px', borderRadius: '16px' }} />
             ))}
           </div>
         ) : (
           (() => {
             const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
             const isPosterTab = activeGalleryTab === 'posters';
+            const itemsPerPage = isPosterTab ? 5 : 4;
 
             if (currentList.length === 0) {
               return (
@@ -1082,16 +1085,16 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
               );
             }
 
-            const pageItems = currentList.slice(photoSlidePage * 4, (photoSlidePage + 1) * 4);
+            const pageItems = currentList.slice(photoSlidePage * itemsPerPage, (photoSlidePage + 1) * itemsPerPage);
 
             return (
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: isPosterTab ? 'repeat(auto-fill, minmax(180px, 1fr))' : 'repeat(auto-fill, minmax(260px, 1fr))',
+                gridTemplateColumns: isPosterTab ? 'repeat(5, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
                 gap: '18px'
               }}>
                 {pageItems.map((img, idx) => {
-                  const globalIdx = photoSlidePage * 4 + idx;
+                  const globalIdx = photoSlidePage * itemsPerPage + idx;
                   const rawPath = img.file_path || img.filePath;
                   const thumbUrl = `https://image.tmdb.org/t/p/${isPosterTab ? 'w500' : 'w780'}${rawPath}`;
 
