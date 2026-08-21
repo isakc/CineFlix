@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -195,13 +196,68 @@ public class TmdbApiClient {
                     .body(TmdbImagesResponse.class);
 
             if (res != null && ((res.getBackdrops() != null && !res.getBackdrops().isEmpty()) || (res.getPosters() != null && !res.getPosters().isEmpty()))) {
-                return res;
+                return curateImages(res);
             }
         } catch (Exception e) {
             log.error("Failed to fetch movie images for TMDB ID {}: {}", movieId, e.getMessage());
         }
 
         return getMockMovieImages(movieId);
+    }
+
+    private TmdbImagesResponse curateImages(TmdbImagesResponse res) {
+        if (res == null) return null;
+
+        List<TmdbImageDto> backdrops = res.getBackdrops() != null ? new ArrayList<>(res.getBackdrops()) : new ArrayList<>();
+        List<TmdbImageDto> posters = res.getPosters() != null ? new ArrayList<>(res.getPosters()) : new ArrayList<>();
+
+        // Curate Backdrops: sort by vote_count & vote_average, distinct by filePath, limit to 20
+        List<TmdbImageDto> curatedBackdrops = backdrops.stream()
+                .filter(b -> b.getFilePath() != null && !b.getFilePath().isBlank())
+                .sorted((a, b) -> {
+                    int countA = a.getVoteCount() != null ? a.getVoteCount() : 0;
+                    int countB = b.getVoteCount() != null ? b.getVoteCount() : 0;
+                    if (countA != countB) return Integer.compare(countB, countA);
+                    double avgA = a.getVoteAverage() != null ? a.getVoteAverage() : 0.0;
+                    double avgB = b.getVoteAverage() != null ? b.getVoteAverage() : 0.0;
+                    return Double.compare(avgB, avgA);
+                })
+                .limit(20)
+                .toList();
+
+        // Curate Posters: prioritize Korean (ko) -> English (en) -> textless (null) -> top-voted other
+        // Filter out dozens of identical translated duplicate posters
+        List<TmdbImageDto> curatedPosters = posters.stream()
+                .filter(p -> p.getFilePath() != null && !p.getFilePath().isBlank())
+                .sorted((a, b) -> {
+                    int priorityA = getPosterLanguagePriority(a.getIso6391());
+                    int priorityB = getPosterLanguagePriority(b.getIso6391());
+                    if (priorityA != priorityB) return Integer.compare(priorityA, priorityB);
+
+                    int countA = a.getVoteCount() != null ? a.getVoteCount() : 0;
+                    int countB = b.getVoteCount() != null ? b.getVoteCount() : 0;
+                    if (countA != countB) return Integer.compare(countB, countA);
+
+                    double avgA = a.getVoteAverage() != null ? a.getVoteAverage() : 0.0;
+                    double avgB = b.getVoteAverage() != null ? b.getVoteAverage() : 0.0;
+                    return Double.compare(avgB, avgA);
+                })
+                .limit(12)
+                .toList();
+
+        return TmdbImagesResponse.builder()
+                .id(res.getId())
+                .backdrops(curatedBackdrops)
+                .posters(curatedPosters)
+                .logos(res.getLogos())
+                .build();
+    }
+
+    private int getPosterLanguagePriority(String lang) {
+        if ("ko".equalsIgnoreCase(lang)) return 1;
+        if ("en".equalsIgnoreCase(lang)) return 2;
+        if (lang == null || lang.isBlank()) return 3;
+        return 4;
     }
 
     private TmdbImagesResponse getMockMovieImages(Long movieId) {

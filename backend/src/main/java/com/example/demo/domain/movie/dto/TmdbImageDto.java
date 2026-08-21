@@ -22,6 +22,9 @@ public class TmdbImageDto {
 
     private Integer width;
 
+    @JsonProperty("iso_639_1")
+    private String iso6391;
+
     @JsonProperty("vote_average")
     private Double voteAverage;
 
