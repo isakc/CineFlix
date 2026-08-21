@@ -18,7 +18,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
 
   // Review Form
   const [author, setAuthor] = useState(user ? user.nickname : '');
-  const [rating, setRating] = useState(5.0);
+  const [rating, setRating] = useState(0);
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -97,7 +97,16 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       const res = await fetch(apiUrl(`/api/movies/${movieId}/reviews`));
       if (res.ok) {
         const data = await res.json();
-        setReviews(data.content || []);
+        const list = Array.isArray(data.content) ? data.content : [];
+        setReviews(list);
+
+        if (user && user.nickname) {
+          const myReview = list.find((r) => r.author === user.nickname);
+          if (myReview) {
+            setRating(Number(myReview.rating) || 0);
+            setContent(myReview.content || '');
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to fetch reviews:', err);
@@ -165,7 +174,18 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    if (!author.trim() || !content.trim() || !movie) return;
+    if (!user) {
+      alert('로그인이 필요한 기능입니다.');
+      return;
+    }
+    if (!rating || rating <= 0) {
+      alert('별점을 0.5점 이상 선택해 주세요.');
+      return;
+    }
+    if (!content.trim() || !movie) {
+      alert('리뷰 내용을 입력해 주세요.');
+      return;
+    }
 
     setSubmitting(true);
     const headers = { 'Content-Type': 'application/json' };
@@ -179,21 +199,22 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
         headers,
         body: JSON.stringify({
           tmdbMovieId: movie.id,
-          author,
+          author: user.nickname,
           rating: parseFloat(rating),
-          content
+          content: content.trim()
         })
       });
 
       if (res.ok) {
-        if (!user) setAuthor('');
-        setContent('');
-        setRating(5.0);
         fetchReviews(movie.id);
         fetchRatingSummary(movie.id);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.message || '리뷰 등록에 실패했습니다.');
       }
     } catch (err) {
       console.error('Failed to submit review:', err);
+      alert('오류가 발생했습니다.');
     } finally {
       setSubmitting(false);
     }

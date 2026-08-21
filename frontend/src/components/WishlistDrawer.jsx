@@ -4,8 +4,17 @@ export default function WishlistDrawer({ isOpen, onClose, wishlists, onRemoveWis
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1200 }}>
+      <div
+        className="modal-card glass"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: '600px',
+          background: '#151522',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)'
+        }}
+      >
         <button className="btn-close" onClick={onClose}>×</button>
         <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '20px' }}>
           ❤️ 내가 담은 위시리스트 ({wishlists.length})

@@ -13,10 +13,10 @@ const RATING_LABELS = {
   5.0: '최고의 명작이에요! 🏆'
 };
 
-export default function StarRatingInput({ value = 5.0, onChange, size = 36, readOnly = false }) {
+export default function StarRatingInput({ value = 0, onChange, size = 36, readOnly = false }) {
   const [hoverScore, setHoverScore] = useState(null);
 
-  const displayScore = hoverScore !== null ? hoverScore : (value || 0);
+  const displayScore = hoverScore !== null ? hoverScore : (Number(value) || 0);
 
   const handleMouseMove = (starIndex, e) => {
     if (readOnly) return;
@@ -134,7 +134,7 @@ export default function StarRatingInput({ value = 5.0, onChange, size = 36, read
             color: displayScore > 0 ? '#E2E8F0' : 'var(--text-secondary)'
           }}
         >
-          {RATING_LABELS[displayScore] || (displayScore > 0 ? '별점 평가' : '별점을 매겨주세요')}
+          {RATING_LABELS[displayScore] || (displayScore > 0 ? '별점 평가' : '별점을 선택해 주세요 ⭐')}
         </span>
       </div>
     </div>

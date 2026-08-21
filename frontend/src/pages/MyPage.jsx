@@ -232,6 +232,21 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
     }
   };
 
+  // Handle Remove Wishlist
+  const handleRemoveWishlist = async (e, wishlistId) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(apiUrl(`/api/wishlists/${wishlistId}`), {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setMyWishlists((prev) => prev.filter((w) => w.id !== wishlistId));
+      }
+    } catch (err) {
+      console.error('Failed to remove wishlist:', err);
+    }
+  };
+
   if (!user) return null;
 
   // Calculate Average Rating
@@ -706,36 +721,67 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                 gap: '18px'
               }}
             >
-              {myWishlists.map((w) => (
-                <div
-                  key={w.id}
-                  className="glass"
-                  style={{
-                    borderRadius: '16px',
-                    padding: '14px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => navigate(`/movie/${w.tmdbMovieId}`)}
-                >
-                  <img
-                    src={w.posterPath ? `https://image.tmdb.org/t/p/w300${w.posterPath}` : '/pB82tRdUZkn8GCHX9W3G1v9v5d.jpg'}
-                    alt={w.title}
+              {myWishlists.map((w) => {
+                const title = w.movieTitle || w.title || '영화';
+                const poster = (w.posterPath && typeof w.posterPath === 'string')
+                  ? (w.posterPath.startsWith('http') ? w.posterPath : `https://image.tmdb.org/t/p/w300${w.posterPath.startsWith('/') ? w.posterPath : '/' + w.posterPath}`)
+                  : '/pB82tRdUZkn8GCHX9W3G1v9v5d.jpg';
+
+                return (
+                  <div
+                    key={w.id || w.tmdbMovieId}
+                    className="glass"
                     style={{
-                      width: '100%',
-                      aspectRatio: '2/3',
-                      objectFit: 'cover',
-                      borderRadius: '10px'
+                      borderRadius: '16px',
+                      padding: '14px',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                      position: 'relative',
+                      cursor: 'pointer'
                     }}
-                  />
-                  <div style={{ fontWeight: '800', fontSize: '0.95rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {w.title}
+                    onClick={() => navigate(`/movie/${w.tmdbMovieId}`)}
+                  >
+                    <div style={{ position: 'relative', width: '100%', aspectRatio: '2/3', borderRadius: '10px', overflow: 'hidden' }}>
+                      <img
+                        src={poster}
+                        alt={title}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                      <button
+                        onClick={(e) => handleRemoveWishlist(e, w.id)}
+                        title="위시리스트에서 삭제"
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          background: 'rgba(0, 0, 0, 0.65)',
+                          color: '#FF6B6B',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '32px',
+                          height: '32px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          backdropFilter: 'blur(4px)'
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                    <div style={{ fontWeight: '800', fontSize: '0.95rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {title}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
