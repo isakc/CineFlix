@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,9 @@ public class EmailVerificationService {
 
     @Autowired(required = false)
     private JavaMailSender mailSender;
+
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
 
     private final Map<String, VerificationState> verificationStore = new ConcurrentHashMap<>();
     private final SecureRandom random = new SecureRandom();
@@ -56,10 +60,12 @@ public class EmailVerificationService {
 
         verificationStore.put(email, new VerificationState(code, expireAt));
 
-        if (mailSender != null) {
+        boolean sentViaSmtp = false;
+        if (mailSender != null && mailUsername != null && !mailUsername.isBlank()) {
             try {
                 MimeMessage message = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                helper.setFrom(mailUsername, "CineFlix");
                 helper.setTo(email);
                 helper.setSubject("[CineFlix] 회원가입 이메일 인증번호 안내");
 
@@ -78,18 +84,19 @@ public class EmailVerificationService {
 
                 helper.setText(html, true);
                 mailSender.send(message);
+                sentViaSmtp = true;
                 log.info("Sent verification email to {} with code {}", email, code);
             } catch (Exception e) {
                 log.warn("Could not send email via SMTP (will provide dev fallback): {}", e.getMessage());
             }
         }
 
-        log.info("[CineFlix Email Verification] Email: {}, Code: {}", email, code);
+        log.info("[CineFlix Email Verification] Email: {}, Code: {}, SentViaSMTP: {}", email, code, sentViaSmtp);
 
         return EmailVerificationResponse.builder()
                 .success(true)
-                .message("인증번호가 발송되었습니다. 이메일(또는 개발 안내)을 확인해 주세요.")
-                .devCode(code)
+                .message(sentViaSmtp ? "인증번호가 이메일로 전송되었습니다." : "인증번호가 발송되었습니다. (테스트 환경에서는 안내창을 확인해 주세요)")
+                .devCode(sentViaSmtp ? null : code)
                 .expireSeconds(300)
                 .build();
     }
