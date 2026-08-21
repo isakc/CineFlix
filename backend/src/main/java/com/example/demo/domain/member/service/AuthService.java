@@ -19,6 +19,7 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
@@ -26,8 +27,14 @@ public class AuthService {
             throw new IllegalArgumentException("이미 가입된 이메일입니다.");
         }
 
+        if (!emailVerificationService.isEmailVerified(request.getEmail())) {
+            throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다. 인증번호를 확인해 주세요.");
+        }
+
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         Member member = memberRepository.save(request.toEntity(encodedPassword));
+
+        emailVerificationService.clearVerification(request.getEmail());
 
         String token = jwtTokenProvider.createToken(member.getEmail(), member.getNickname(), member.getRole().name());
 

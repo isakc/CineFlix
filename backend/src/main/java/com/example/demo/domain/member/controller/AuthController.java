@@ -1,9 +1,8 @@
 package com.example.demo.domain.member.controller;
 
-import com.example.demo.domain.member.dto.AuthResponse;
-import com.example.demo.domain.member.dto.LoginRequest;
-import com.example.demo.domain.member.dto.SignupRequest;
+import com.example.demo.domain.member.dto.*;
 import com.example.demo.domain.member.service.AuthService;
+import com.example.demo.domain.member.service.EmailVerificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -13,13 +12,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Auth API", description = "회원가입, 로그인 및 내 정보 조회 인증 API")
+@Tag(name = "Auth API", description = "회원가입, 로그인, 이메일 인증 및 내 정보 조회 인증 API")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
+
+    @Operation(summary = "이메일 인증번호 발송", description = "회원가입을 위한 6자리 인증번호를 이메일로 발송합니다.")
+    @PostMapping("/send-verification-code")
+    public ResponseEntity<EmailVerificationResponse> sendVerificationCode(@Valid @RequestBody EmailSendRequest request) {
+        EmailVerificationResponse response = emailVerificationService.sendVerificationCode(request.getEmail());
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "이메일 인증번호 검증", description = "발송된 6자리 인증번호를 검증합니다.")
+    @PostMapping("/verify-code")
+    public ResponseEntity<EmailVerificationResponse> verifyCode(@Valid @RequestBody EmailVerifyRequest request) {
+        EmailVerificationResponse response = emailVerificationService.verifyCode(request.getEmail(), request.getCode());
+        return ResponseEntity.ok(response);
+    }
 
     @Operation(summary = "회원가입", description = "이메일, 비밀번호, 닉네임으로 신규 회원가입을 진행합니다.")
     @PostMapping("/signup")
