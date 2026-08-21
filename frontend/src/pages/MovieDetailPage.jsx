@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
+import StarRatingInput from '../components/StarRatingInput';
 
 const DEFAULT_BLANK_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24"><rect width="100%" height="100%" fill="%231A1B26"/><circle cx="12" cy="8" r="4" fill="%23787C99"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" fill="%23787C99"/></svg>`;
 
@@ -603,6 +604,23 @@ export default function MovieDetailPage({ user, userIdentifier }) {
         <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>✍️ 커뮤니티 리뷰 & 별점</h2>
 
         <form className="review-form" onSubmit={handleSubmitReview} style={{ marginBottom: '32px' }}>
+          {/* Watcha-style 5-Star Rating Input */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '20px 16px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            borderRadius: '18px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            marginBottom: '20px'
+          }}>
+            <div style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '10px', fontWeight: '700' }}>
+              이 영화를 어떻게 보셨나요? (0.5점 단위로 평가)
+            </div>
+            <StarRatingInput value={rating} onChange={(newRating) => setRating(newRating)} size={42} />
+          </div>
+
           <div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
             <input
               type="text"
@@ -613,24 +631,6 @@ export default function MovieDetailPage({ user, userIdentifier }) {
               style={{ flex: 1, opacity: user ? 0.8 : 1 }}
               required
             />
-            <select
-              value={rating}
-              onChange={(e) => setRating(e.target.value)}
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-color)',
-                color: 'white',
-                borderRadius: '8px',
-                padding: '0 16px',
-                fontFamily: 'inherit'
-              }}
-            >
-              <option value="5.0" style={{ background: '#13151E' }}>★★★★★ 5.0 (최고예요)</option>
-              <option value="4.0" style={{ background: '#13151E' }}>★★★★☆ 4.0 (재밌어요)</option>
-              <option value="3.0" style={{ background: '#13151E' }}>★★★☆☆ 3.0 (보통이에요)</option>
-              <option value="2.0" style={{ background: '#13151E' }}>★★☆☆☆ 2.0 (아쉬워요)</option>
-              <option value="1.0" style={{ background: '#13151E' }}>★☆☆☆☆ 1.0 (별로예요)</option>
-            </select>
           </div>
           <textarea
             placeholder="영화에 대한 감상평을 자유롭게 작성해 보세요..."
