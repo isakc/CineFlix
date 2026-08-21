@@ -40,8 +40,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/reviews/**", "/api/wishlists/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/reviews", "/api/wishlists").permitAll() // allow for guest/registered users
+                        .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/reviews/**", "/api/wishlists/**", "/api/news/**", "/api/playlists/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/wishlists/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);

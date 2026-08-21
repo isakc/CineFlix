@@ -5,7 +5,7 @@ import StarRatingInput from '../components/StarRatingInput';
 
 const DEFAULT_BLANK_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24"><rect width="100%" height="100%" fill="%231A1B26"/><circle cx="12" cy="8" r="4" fill="%23787C99"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" fill="%23787C99"/></svg>`;
 
-export default function MovieDetailPage({ user, userIdentifier }) {
+export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -603,48 +603,75 @@ export default function MovieDetailPage({ user, userIdentifier }) {
       <section className="glass" style={{ borderRadius: '24px', padding: '32px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>✍️ 커뮤니티 리뷰 & 별점</h2>
 
-        <form className="review-form" onSubmit={handleSubmitReview} style={{ marginBottom: '32px' }}>
-          {/* Watcha-style 5-Star Rating Input */}
+        {!user ? (
           <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '20px 16px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            borderRadius: '18px',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            marginBottom: '20px'
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px dashed rgba(255, 255, 255, 0.18)',
+            borderRadius: '20px',
+            padding: '36px 24px',
+            textAlign: 'center',
+            marginBottom: '36px'
           }}>
-            <div style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '10px', fontWeight: '700' }}>
-              이 영화를 어떻게 보셨나요? (0.5점 단위로 평가)
-            </div>
-            <StarRatingInput value={rating} onChange={(newRating) => setRating(newRating)} size={42} />
-          </div>
-
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
-            <input
-              type="text"
-              placeholder="작성자 닉네임"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              readOnly={!!user}
-              style={{ flex: 1, opacity: user ? 0.8 : 1 }}
-              required
-            />
-          </div>
-          <textarea
-            placeholder="영화에 대한 감상평을 자유롭게 작성해 보세요..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={4}
-            required
-          />
-          <div style={{ textAlign: 'right', marginTop: '12px' }}>
-            <button type="submit" className="btn-primary" disabled={submitting} style={{ padding: '12px 28px' }}>
-              {submitting ? '리뷰 작성 중...' : '리뷰 등록하기'}
+            <div style={{ fontSize: '2.2rem', marginBottom: '10px' }}>🔒</div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', marginBottom: '8px' }}>
+              별점 및 리뷰 작성을 위해 로그인이 필요합니다
+            </h3>
+            <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '22px', lineHeight: '1.6' }}>
+              로그인하시면 나만의 0.5점 단위 별점 평가와 솔직한 감상평을 기록하고 공유할 수 있습니다.
+            </p>
+            <button
+              onClick={onOpenAuth}
+              className="btn-primary"
+              style={{
+                padding: '12px 32px',
+                fontSize: '0.95rem',
+                fontWeight: '800',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <span>🔑</span>
+              <span>로그인 / 회원가입 하러가기</span>
             </button>
           </div>
-        </form>
+        ) : (
+          <form className="review-form" onSubmit={handleSubmitReview} style={{ marginBottom: '32px' }}>
+            {/* Watcha-style 5-Star Rating Input */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '20px 16px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: '18px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              marginBottom: '20px'
+            }}>
+              <div style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '10px', fontWeight: '700' }}>
+                이 영화를 어떻게 보셨나요? (0.5점 단위로 평가)
+              </div>
+              <StarRatingInput value={rating} onChange={(newRating) => setRating(newRating)} size={42} />
+            </div>
+
+            <div style={{ marginBottom: '14px', fontSize: '0.95rem', fontWeight: '700', color: '#E2E8F0' }}>
+              👤 작성자: <span style={{ color: 'var(--accent-gold)' }}>{user.nickname}</span> 님
+            </div>
+
+            <textarea
+              placeholder="영화에 대한 솔직한 감상평을 자유롭게 작성해 보세요..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={4}
+              required
+            />
+            <div style={{ textAlign: 'right', marginTop: '12px' }}>
+              <button type="submit" className="btn-primary" disabled={submitting} style={{ padding: '12px 28px' }}>
+                {submitting ? '리뷰 작성 중...' : '리뷰 등록하기'}
+              </button>
+            </div>
+          </form>
+        )}
 
         <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '16px' }}>💬 등록된 리뷰 목록 ({reviews.length})</h3>
         {reviews.length === 0 ? (

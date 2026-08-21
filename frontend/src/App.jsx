@@ -360,6 +360,7 @@ function AppContent() {
             <MovieDetailPage
               user={user}
               userIdentifier={getUserIdentifier()}
+              onOpenAuth={() => setIsAuthOpen(true)}
             />
           }
         />
