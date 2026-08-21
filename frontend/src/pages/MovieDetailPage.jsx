@@ -30,10 +30,9 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const [addMessage, setAddMessage] = useState('');
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  // Gallery & Still Cuts
-  const [galleryImages, setGalleryImages] = useState({ backdrops: [], posters: [] });
+  // Unified Gallery Photos & Still Cuts
+  const [galleryPhotos, setGalleryPhotos] = useState([]);
   const [loadingGallery, setLoadingGallery] = useState(false);
-  const [activeGalleryTab, setActiveGalleryTab] = useState('backdrops');
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
   // 4-Item Carousel / Slide States
@@ -64,21 +63,19 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   // Lightbox keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (lightboxIndex === null) return;
-      const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
-      if (currentList.length === 0) return;
+      if (lightboxIndex === null || galleryPhotos.length === 0) return;
 
       if (e.key === 'Escape') {
         setLightboxIndex(null);
       } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        setLightboxIndex((prev) => (prev + 1) % currentList.length);
+        setLightboxIndex((prev) => (prev + 1) % galleryPhotos.length);
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        setLightboxIndex((prev) => (prev - 1 + currentList.length) % currentList.length);
+        setLightboxIndex((prev) => (prev - 1 + galleryPhotos.length) % galleryPhotos.length);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxIndex, activeGalleryTab, galleryImages]);
+  }, [lightboxIndex, galleryPhotos]);
 
   const fetchMovieImages = async (movieId) => {
     setLoadingGallery(true);
@@ -86,10 +83,32 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       const res = await fetch(apiUrl(`/api/movies/${movieId}/images`));
       if (res.ok) {
         const data = await res.json();
-        setGalleryImages({
-          backdrops: Array.isArray(data.backdrops) ? data.backdrops : [],
-          posters: Array.isArray(data.posters) ? data.posters : []
-        });
+        const posters = Array.isArray(data.posters) ? data.posters : [];
+        const backdrops = Array.isArray(data.backdrops) ? data.backdrops : [];
+
+        // Combine Korean posters first, then high-res scene cuts, deduplicating by filePath
+        const seen = new Set();
+        const combined = [];
+
+        // Add Korean / official posters first
+        for (const p of posters) {
+          const path = p.file_path || p.filePath;
+          if (path && !seen.has(path)) {
+            seen.add(path);
+            combined.push({ ...p, type: 'poster' });
+          }
+        }
+
+        // Add backdrops / scene cuts
+        for (const b of backdrops) {
+          const path = b.file_path || b.filePath;
+          if (path && !seen.has(path)) {
+            seen.add(path);
+            combined.push({ ...b, type: 'backdrop' });
+          }
+        }
+
+        setGalleryPhotos(combined);
       }
     } catch (err) {
       console.error('Failed to fetch movie gallery images:', err);
@@ -934,7 +953,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
         )}
       </section>
 
-      {/* Movie Photo Gallery & Still Cuts Section (with 4-card slider) */}
+      {/* Movie Photo Gallery & Still Cuts Unified Section (with 4-card slider) */}
       <section style={{ marginBottom: '48px' }}>
         <div style={{
           display: 'flex',
@@ -946,238 +965,169 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
         }}>
           <h2 style={{ fontSize: '1.6rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
             <span>📸</span>
-            <span>갤러리 & 현장 스틸컷</span>
+            <span>영화 포토 & 현장 스틸컷 ({galleryPhotos.length})</span>
           </h2>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {/* Filter Pills */}
-            <div style={{ display: 'flex', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '4px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <button
-                onClick={() => {
-                  setActiveGalleryTab('backdrops');
-                  setPhotoSlidePage(0);
-                  setLightboxIndex(null);
-                }}
-                style={{
-                  background: activeGalleryTab === 'backdrops' ? 'var(--accent-gold)' : 'transparent',
-                  color: activeGalleryTab === 'backdrops' ? '#000' : 'var(--text-secondary)',
-                  border: 'none',
-                  padding: '7px 16px',
-                  borderRadius: '10px',
-                  fontWeight: '800',
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                🎬 명장면 스틸컷 ({galleryImages.backdrops.length})
-              </button>
-              <button
-                onClick={() => {
-                  setActiveGalleryTab('posters');
-                  setPhotoSlidePage(0);
-                  setLightboxIndex(null);
-                }}
-                style={{
-                  background: activeGalleryTab === 'posters' ? 'var(--accent-gold)' : 'transparent',
-                  color: activeGalleryTab === 'posters' ? '#000' : 'var(--text-secondary)',
-                  border: 'none',
-                  padding: '7px 16px',
-                  borderRadius: '10px',
-                  fontWeight: '800',
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                🎨 공식 포스터 ({galleryImages.posters.length})
-              </button>
+          {/* Slide Navigation Controls */}
+          {galleryPhotos.length > 4 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                {photoSlidePage + 1} / {Math.ceil(galleryPhotos.length / 4)}
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  onClick={() => setPhotoSlidePage((prev) => Math.max(0, prev - 1))}
+                  disabled={photoSlidePage === 0}
+                  style={{
+                    background: photoSlidePage === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.12)',
+                    color: photoSlidePage === 0 ? '#555' : '#fff',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '10px',
+                    width: '36px',
+                    height: '36px',
+                    cursor: photoSlidePage === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.1rem',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="이전 사진"
+                >
+                  ❮
+                </button>
+                <button
+                  onClick={() => setPhotoSlidePage((prev) => Math.min(Math.ceil(galleryPhotos.length / 4) - 1, prev + 1))}
+                  disabled={photoSlidePage >= Math.ceil(galleryPhotos.length / 4) - 1}
+                  style={{
+                    background: photoSlidePage >= Math.ceil(galleryPhotos.length / 4) - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.12)',
+                    color: photoSlidePage >= Math.ceil(galleryPhotos.length / 4) - 1 ? '#555' : '#fff',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '10px',
+                    width: '36px',
+                    height: '36px',
+                    cursor: photoSlidePage >= Math.ceil(galleryPhotos.length / 4) - 1 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.1rem',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="다음 사진"
+                >
+                  ❯
+                </button>
+              </div>
             </div>
-
-            {/* Slide Navigation Controls */}
-            {(() => {
-              const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
-              const isPosterTab = activeGalleryTab === 'posters';
-              const itemsPerPage = isPosterTab ? 5 : 4;
-              const totalPages = Math.ceil(currentList.length / itemsPerPage);
-              if (totalPages <= 1) return null;
-
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
-                    {photoSlidePage + 1} / {totalPages}
-                  </span>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={() => setPhotoSlidePage((prev) => Math.max(0, prev - 1))}
-                      disabled={photoSlidePage === 0}
-                      style={{
-                        background: photoSlidePage === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.12)',
-                        color: photoSlidePage === 0 ? '#555' : '#fff',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '10px',
-                        width: '36px',
-                        height: '36px',
-                        cursor: photoSlidePage === 0 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.1rem',
-                        transition: 'all 0.2s ease'
-                      }}
-                      title="이전 사진"
-                    >
-                      ❮
-                    </button>
-                    <button
-                      onClick={() => setPhotoSlidePage((prev) => Math.min(totalPages - 1, prev + 1))}
-                      disabled={photoSlidePage >= totalPages - 1}
-                      style={{
-                        background: photoSlidePage >= totalPages - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.12)',
-                        color: photoSlidePage >= totalPages - 1 ? '#555' : '#fff',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '10px',
-                        width: '36px',
-                        height: '36px',
-                        cursor: photoSlidePage >= totalPages - 1 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.1rem',
-                        transition: 'all 0.2s ease'
-                      }}
-                      title="다음 사진"
-                    >
-                      ❯
-                    </button>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
+          )}
         </div>
 
         {loadingGallery ? (
-          <div style={{ display: 'grid', gridTemplateColumns: activeGalleryTab === 'posters' ? 'repeat(5, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))', gap: '16px' }}>
-            {[...Array(activeGalleryTab === 'posters' ? 5 : 4)].map((_, i) => (
-              <div key={i} className="card-skeleton" style={{ height: activeGalleryTab === 'posters' ? '280px' : '170px', borderRadius: '16px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '16px' }}>
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="card-skeleton" style={{ height: '170px', borderRadius: '16px' }} />
             ))}
           </div>
+        ) : galleryPhotos.length === 0 ? (
+          <div className="glass" style={{
+            padding: '36px 20px',
+            borderRadius: '16px',
+            textAlign: 'center',
+            color: 'var(--text-secondary)',
+            border: '1px solid rgba(255, 255, 255, 0.06)'
+          }}>
+            <p style={{ margin: 0, fontSize: '0.95rem' }}>
+              등록된 영화 포토 이미지가 없습니다.
+            </p>
+          </div>
         ) : (
-          (() => {
-            const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
-            const isPosterTab = activeGalleryTab === 'posters';
-            const itemsPerPage = isPosterTab ? 5 : 4;
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            gap: '18px'
+          }}>
+            {galleryPhotos.slice(photoSlidePage * 4, (photoSlidePage + 1) * 4).map((img, idx) => {
+              const globalIdx = photoSlidePage * 4 + idx;
+              const rawPath = img.file_path || img.filePath;
+              const thumbUrl = `https://image.tmdb.org/t/p/w780${rawPath}`;
 
-            if (currentList.length === 0) {
               return (
-                <div className="glass" style={{
-                  padding: '36px 20px',
-                  borderRadius: '16px',
-                  textAlign: 'center',
-                  color: 'var(--text-secondary)',
-                  border: '1px solid rgba(255, 255, 255, 0.06)'
-                }}>
-                  <p style={{ margin: 0, fontSize: '0.95rem' }}>
-                    등록된 {isPosterTab ? '포스터' : '스틸컷'} 이미지가 없습니다.
-                  </p>
+                <div
+                  key={globalIdx}
+                  onClick={() => setLightboxIndex(globalIdx)}
+                  className="glass"
+                  style={{
+                    position: 'relative',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    aspectRatio: '16 / 9',
+                    transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                    e.currentTarget.style.borderColor = 'var(--accent-gold)';
+                    e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <img
+                    src={thumbUrl}
+                    alt={`${movie.title} 포토 ${globalIdx + 1}`}
+                    loading="lazy"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)',
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      opacity: 0.9
+                    }}
+                  >
+                    <span style={{ fontSize: '0.78rem', color: '#FFF', fontWeight: '700', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                      #{globalIdx + 1}
+                    </span>
+                    <span style={{
+                      background: 'rgba(0,0,0,0.65)',
+                      backdropFilter: 'blur(4px)',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      color: 'var(--accent-gold)',
+                      fontWeight: '800',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <span>🔍</span>
+                      <span>확대</span>
+                    </span>
+                  </div>
                 </div>
               );
-            }
-
-            const pageItems = currentList.slice(photoSlidePage * itemsPerPage, (photoSlidePage + 1) * itemsPerPage);
-
-            return (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: isPosterTab ? 'repeat(5, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
-                gap: '18px'
-              }}>
-                {pageItems.map((img, idx) => {
-                  const globalIdx = photoSlidePage * itemsPerPage + idx;
-                  const rawPath = img.file_path || img.filePath;
-                  const thumbUrl = `https://image.tmdb.org/t/p/${isPosterTab ? 'w500' : 'w780'}${rawPath}`;
-
-                  return (
-                    <div
-                      key={globalIdx}
-                      onClick={() => setLightboxIndex(globalIdx)}
-                      className="glass"
-                      style={{
-                        position: 'relative',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        aspectRatio: isPosterTab ? '2 / 3' : '16 / 9',
-                        transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                        e.currentTarget.style.borderColor = 'var(--accent-gold)';
-                        e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.5)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                    >
-                      <img
-                        src={thumbUrl}
-                        alt={`${movie.title} 스틸컷 ${globalIdx + 1}`}
-                        loading="lazy"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          display: 'block'
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)',
-                          display: 'flex',
-                          alignItems: 'flex-end',
-                          justifyContent: 'space-between',
-                          padding: '12px 14px',
-                          opacity: 0.9
-                        }}
-                      >
-                        <span style={{ fontSize: '0.78rem', color: '#FFF', fontWeight: '700', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
-                          #{globalIdx + 1}
-                        </span>
-                        <span style={{
-                          background: 'rgba(0,0,0,0.65)',
-                          backdropFilter: 'blur(4px)',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '0.72rem',
-                          color: 'var(--accent-gold)',
-                          fontWeight: '800',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}>
-                          <span>🔍</span>
-                          <span>확대</span>
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()
+            })}
+          </div>
         )}
       </section>
 
       {/* Lightbox High-Resolution Full-Screen Modal */}
       {lightboxIndex !== null && (() => {
-        const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
-        const currentImg = currentList[lightboxIndex];
+        const currentImg = galleryPhotos[lightboxIndex];
         if (!currentImg) return null;
         const rawPath = currentImg.file_path || currentImg.filePath;
         const highResUrl = `https://image.tmdb.org/t/p/original${rawPath}`;
@@ -1220,7 +1170,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                   borderRadius: '12px',
                   fontSize: '0.85rem'
                 }}>
-                  {lightboxIndex + 1} / {currentList.length}
+                  {lightboxIndex + 1} / {galleryPhotos.length}
                 </span>
               </div>
 
@@ -1280,9 +1230,9 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
               }}
             >
               {/* Prev Button */}
-              {currentList.length > 1 && (
+              {galleryPhotos.length > 1 && (
                 <button
-                  onClick={() => setLightboxIndex((prev) => (prev - 1 + currentList.length) % currentList.length)}
+                  onClick={() => setLightboxIndex((prev) => (prev - 1 + galleryPhotos.length) % galleryPhotos.length)}
                   style={{
                     position: 'absolute',
                     left: '-60px',
@@ -1306,7 +1256,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
 
               <img
                 src={highResUrl}
-                alt={`${movie.title} 스틸컷`}
+                alt={`${movie.title} 포토`}
                 style={{
                   maxWidth: '85vw',
                   maxHeight: '76vh',
@@ -1318,9 +1268,9 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
               />
 
               {/* Next Button */}
-              {currentList.length > 1 && (
+              {galleryPhotos.length > 1 && (
                 <button
-                  onClick={() => setLightboxIndex((prev) => (prev + 1) % currentList.length)}
+                  onClick={() => setLightboxIndex((prev) => (prev + 1) % galleryPhotos.length)}
                   style={{
                     position: 'absolute',
                     right: '-60px',

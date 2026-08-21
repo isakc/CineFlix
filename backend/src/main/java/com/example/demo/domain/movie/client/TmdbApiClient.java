@@ -191,7 +191,7 @@ public class TmdbApiClient {
 
         try {
             TmdbImagesResponse res = restClient.get()
-                    .uri(baseUrl + "/movie/{movieId}/images?api_key={apiKey}", movieId, apiKey)
+                    .uri(baseUrl + "/movie/{movieId}/images?api_key={apiKey}&include_image_language=ko,null", movieId, apiKey)
                     .retrieve()
                     .body(TmdbImagesResponse.class);
 
@@ -211,7 +211,7 @@ public class TmdbApiClient {
         List<TmdbImageDto> backdrops = res.getBackdrops() != null ? new ArrayList<>(res.getBackdrops()) : new ArrayList<>();
         List<TmdbImageDto> posters = res.getPosters() != null ? new ArrayList<>(res.getPosters()) : new ArrayList<>();
 
-        // Curate Backdrops: sort by vote_count & vote_average, distinct by filePath, limit to 20
+        // Curate Backdrops: distinct by filePath, limit to 20
         List<TmdbImageDto> curatedBackdrops = backdrops.stream()
                 .filter(b -> b.getFilePath() != null && !b.getFilePath().isBlank())
                 .sorted((a, b) -> {
@@ -225,13 +225,13 @@ public class TmdbApiClient {
                 .limit(20)
                 .toList();
 
-        // Curate Posters: prioritize Korean (ko) -> English (en) -> textless (null) -> top-voted other
-        // Filter out dozens of identical translated duplicate posters
+        // Curate Posters: strictly Korean (ko) or textless (null), distinct by filePath, limit to 6
         List<TmdbImageDto> curatedPosters = posters.stream()
                 .filter(p -> p.getFilePath() != null && !p.getFilePath().isBlank())
+                .filter(p -> "ko".equalsIgnoreCase(p.getIso6391()) || p.getIso6391() == null || p.getIso6391().isBlank())
                 .sorted((a, b) -> {
-                    int priorityA = getPosterLanguagePriority(a.getIso6391());
-                    int priorityB = getPosterLanguagePriority(b.getIso6391());
+                    int priorityA = "ko".equalsIgnoreCase(a.getIso6391()) ? 1 : 2;
+                    int priorityB = "ko".equalsIgnoreCase(b.getIso6391()) ? 1 : 2;
                     if (priorityA != priorityB) return Integer.compare(priorityA, priorityB);
 
                     int countA = a.getVoteCount() != null ? a.getVoteCount() : 0;
@@ -242,7 +242,7 @@ public class TmdbApiClient {
                     double avgB = b.getVoteAverage() != null ? b.getVoteAverage() : 0.0;
                     return Double.compare(avgB, avgA);
                 })
-                .limit(12)
+                .limit(6)
                 .toList();
 
         return TmdbImagesResponse.builder()
