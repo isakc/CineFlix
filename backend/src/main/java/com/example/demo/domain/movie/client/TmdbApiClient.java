@@ -190,7 +190,7 @@ public class TmdbApiClient {
 
         try {
             TmdbImagesResponse res = restClient.get()
-                    .uri(baseUrl + "/movie/{movieId}/images?api_key={apiKey}&include_image_language=ko,en,null", movieId, apiKey)
+                    .uri(baseUrl + "/movie/{movieId}/images?api_key={apiKey}", movieId, apiKey)
                     .retrieve()
                     .body(TmdbImagesResponse.class);
 
