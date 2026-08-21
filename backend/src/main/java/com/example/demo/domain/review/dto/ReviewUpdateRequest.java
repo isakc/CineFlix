@@ -20,6 +20,5 @@ public class ReviewUpdateRequest {
     @DecimalMax(value = "5.0", message = "별점은 최대 5.0점까지 가능합니다.")
     private Double rating;
 
-    @NotBlank(message = "리뷰 내용은 필수입니다.")
     private String content;
 }

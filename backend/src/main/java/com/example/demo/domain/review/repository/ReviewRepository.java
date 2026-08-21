@@ -15,6 +15,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     java.util.List<Review> findByAuthorOrderByCreatedAtDesc(String author);
 
+    Optional<Review> findByTmdbMovieIdAndAuthor(Long tmdbMovieId, String author);
+
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.tmdbMovieId = :tmdbMovieId")
     Optional<Double> findAverageRatingByTmdbMovieId(@Param("tmdbMovieId") Long tmdbMovieId);
 

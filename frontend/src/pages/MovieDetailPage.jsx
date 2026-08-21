@@ -21,6 +21,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [ratingMessage, setRatingMessage] = useState('');
 
   // Playlist Picker
   const [playlists, setPlaylists] = useState([]);
@@ -172,6 +173,40 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
     }
   };
 
+  const handleRatingChange = async (newRating) => {
+    setRating(newRating);
+    if (!user) {
+      alert('별점 평가를 저장하려면 로그인이 필요합니다.');
+      return;
+    }
+    if (!movie || !movie.id) return;
+
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (user && user.token) {
+        headers['Authorization'] = `Bearer ${user.token}`;
+      }
+      const res = await fetch(apiUrl('/api/reviews'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          tmdbMovieId: movie.id,
+          author: user.nickname,
+          rating: parseFloat(newRating),
+          content: content.trim()
+        })
+      });
+      if (res.ok) {
+        setRatingMessage(`✨ 별점 ${newRating.toFixed(1)}점이 즉시 저장되었습니다!`);
+        setTimeout(() => setRatingMessage(''), 2500);
+        fetchReviews(movie.id);
+        fetchRatingSummary(movie.id);
+      }
+    } catch (err) {
+      console.error('Failed to save rating:', err);
+    }
+  };
+
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!user) {
@@ -182,10 +217,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       alert('별점을 0.5점 이상 선택해 주세요.');
       return;
     }
-    if (!content.trim() || !movie) {
-      alert('리뷰 내용을 입력해 주세요.');
-      return;
-    }
+    if (!movie) return;
 
     setSubmitting(true);
     const headers = { 'Content-Type': 'application/json' };
@@ -206,6 +238,8 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       });
 
       if (res.ok) {
+        setRatingMessage('✅ 리뷰와 별점이 성공적으로 저장되었습니다!');
+        setTimeout(() => setRatingMessage(''), 2500);
         fetchReviews(movie.id);
         fetchRatingSummary(movie.id);
       } else {
@@ -687,9 +721,23 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
               marginBottom: '20px'
             }}>
               <div style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '10px', fontWeight: '700' }}>
-                이 영화를 어떻게 보셨나요? (0.5점 단위로 평가)
+                이 영화를 어떻게 보셨나요? (별점을 클릭하면 바로 저장됩니다 ⭐)
               </div>
-              <StarRatingInput value={rating} onChange={(newRating) => setRating(newRating)} size={42} />
+              <StarRatingInput value={rating} onChange={handleRatingChange} size={42} />
+              {ratingMessage && (
+                <div style={{
+                  color: 'var(--accent-gold)',
+                  fontSize: '0.92rem',
+                  fontWeight: '800',
+                  marginTop: '10px',
+                  background: 'rgba(255, 184, 0, 0.12)',
+                  padding: '6px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 184, 0, 0.3)'
+                }}>
+                  {ratingMessage}
+                </div>
+              )}
             </div>
 
             <div style={{ marginBottom: '14px', fontSize: '0.95rem', fontWeight: '700', color: '#E2E8F0' }}>
@@ -697,15 +745,14 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
             </div>
 
             <textarea
-              placeholder="영화에 대한 솔직한 감상평을 자유롭게 작성해 보세요..."
+              placeholder="영화에 대한 솔직한 한줄평이나 리뷰를 남겨보세요... (선택 사항)"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={4}
-              required
             />
             <div style={{ textAlign: 'right', marginTop: '12px' }}>
               <button type="submit" className="btn-primary" disabled={submitting} style={{ padding: '12px 28px' }}>
-                {submitting ? '리뷰 작성 중...' : '리뷰 등록하기'}
+                {submitting ? '리뷰 저장 중...' : (content.trim() ? '리뷰 등록하기' : '별점 & 리뷰 저장')}
               </button>
             </div>
           </form>

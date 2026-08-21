@@ -56,22 +56,25 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
       });
       if (reviewsRes.ok) {
         const reviewsData = await reviewsRes.json();
-        setMyReviews(reviewsData || []);
+        const list = Array.isArray(reviewsData) ? reviewsData : (reviewsData.content || []);
+        setMyReviews(list);
       }
 
       // 2. Fetch My Playlists
-      const uid = userIdentifier || user.email || user.nickname;
+      const uid = userIdentifier || (user ? (user.nickname || user.email) : '');
       const playlistsRes = await fetch(apiUrl(`/api/playlists?userIdentifier=${encodeURIComponent(uid)}`));
       if (playlistsRes.ok) {
         const playlistsData = await playlistsRes.json();
-        setMyPlaylists(playlistsData || []);
+        const plList = Array.isArray(playlistsData) ? playlistsData : (playlistsData.content || []);
+        setMyPlaylists(plList);
       }
 
       // 3. Fetch My Wishlists
       const wishlistsRes = await fetch(apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(uid)}`));
       if (wishlistsRes.ok) {
         const wishlistsData = await wishlistsRes.json();
-        setMyWishlists(wishlistsData || []);
+        const wList = Array.isArray(wishlistsData) ? wishlistsData : (wishlistsData.content || []);
+        setMyWishlists(wList);
       }
     } catch (err) {
       console.error('Failed to fetch mypage data:', err);
@@ -233,15 +236,16 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
   };
 
   // Handle Remove Wishlist
-  const handleRemoveWishlist = async (e, wishlistId) => {
+  const handleRemoveWishlist = async (e, item) => {
     e.stopPropagation();
     try {
-      const res = await fetch(apiUrl(`/api/wishlists/${wishlistId}`), {
-        method: 'DELETE'
-      });
-      if (res.ok) {
-        setMyWishlists((prev) => prev.filter((w) => w.id !== wishlistId));
+      if (item.id) {
+        await fetch(apiUrl(`/api/wishlists/${item.id}`), { method: 'DELETE' });
+      } else if (item.tmdbMovieId) {
+        const uid = userIdentifier || (user ? (user.nickname || user.email) : '');
+        await fetch(apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(uid)}&movieId=${item.tmdbMovieId}`), { method: 'DELETE' });
       }
+      setMyWishlists((prev) => prev.filter((w) => (item.id ? w.id !== item.id : w.tmdbMovieId !== item.tmdbMovieId)));
     } catch (err) {
       console.error('Failed to remove wishlist:', err);
     }
@@ -591,19 +595,38 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                     </div>
                   </div>
 
-                  <p
-                    style={{
-                      color: '#D1D5DB',
-                      fontSize: '0.96rem',
-                      lineHeight: '1.6',
-                      margin: 0,
-                      background: 'rgba(0,0,0,0.2)',
-                      padding: '14px 16px',
-                      borderRadius: '12px'
-                    }}
-                  >
-                    {review.content}
-                  </p>
+                  {review.content ? (
+                    <p
+                      style={{
+                        color: '#D1D5DB',
+                        fontSize: '0.96rem',
+                        lineHeight: '1.6',
+                        margin: 0,
+                        background: 'rgba(0,0,0,0.2)',
+                        padding: '14px 16px',
+                        borderRadius: '12px'
+                      }}
+                    >
+                      {review.content}
+                    </p>
+                  ) : (
+                    <div
+                      style={{
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.88rem',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        border: '1px dashed rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span>⭐</span>
+                      <span>별점만 평가한 영화입니다 (작성된 한줄평 없음)</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -754,7 +777,7 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                         }}
                       />
                       <button
-                        onClick={(e) => handleRemoveWishlist(e, w.id)}
+                        onClick={(e) => handleRemoveWishlist(e, w)}
                         title="위시리스트에서 삭제"
                         style={{
                           position: 'absolute',

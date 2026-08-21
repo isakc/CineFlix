@@ -22,8 +22,22 @@ public class ReviewService {
 
     @Transactional
     public Long createReview(ReviewCreateRequest request) {
-        Review review = request.toEntity();
-        return reviewRepository.save(review).getId();
+        String cleanContent = request.getContent() != null ? request.getContent().trim() : "";
+        var existingOpt = reviewRepository.findByTmdbMovieIdAndAuthor(request.getTmdbMovieId(), request.getAuthor());
+        if (existingOpt.isPresent()) {
+            Review existing = existingOpt.get();
+            String contentToSet = (!cleanContent.isEmpty()) ? cleanContent : (existing.getContent() != null ? existing.getContent() : "");
+            existing.update(request.getRating(), contentToSet);
+            return existing.getId();
+        } else {
+            Review review = Review.builder()
+                    .tmdbMovieId(request.getTmdbMovieId())
+                    .author(request.getAuthor())
+                    .rating(request.getRating())
+                    .content(cleanContent)
+                    .build();
+            return reviewRepository.save(review).getId();
+        }
     }
 
     public List<UserReviewResponse> getMyReviews(String author) {

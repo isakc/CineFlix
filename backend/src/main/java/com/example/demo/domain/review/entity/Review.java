@@ -28,7 +28,7 @@ public class Review extends BaseTimeEntity {
     @Column(nullable = false)
     private Double rating;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String content;
 
     @Builder

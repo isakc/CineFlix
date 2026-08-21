@@ -65,4 +65,11 @@ public class WishlistController {
         wishlistService.removeFromWishlist(userIdentifier, movieId);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "위시리스트 고유 ID 삭제", description = "위시리스트 고유 ID로 해당 항목을 삭제합니다.")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+        wishlistService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

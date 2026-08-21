@@ -55,4 +55,9 @@ public class WishlistService {
                 .orElseThrow(() -> new IllegalArgumentException("위시리스트 항목을 찾을 수 없습니다."));
         wishlistRepository.delete(wishlist);
     }
+
+    @Transactional
+    public void deleteById(Long id) {
+        wishlistRepository.findById(id).ifPresent(wishlistRepository::delete);
+    }
 }
