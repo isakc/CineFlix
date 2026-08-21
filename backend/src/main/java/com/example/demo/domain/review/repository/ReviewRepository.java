@@ -13,6 +13,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Page<Review> findByTmdbMovieId(Long tmdbMovieId, Pageable pageable);
 
+    java.util.List<Review> findByAuthorOrderByCreatedAtDesc(String author);
+
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.tmdbMovieId = :tmdbMovieId")
     Optional<Double> findAverageRatingByTmdbMovieId(@Param("tmdbMovieId") Long tmdbMovieId);
 

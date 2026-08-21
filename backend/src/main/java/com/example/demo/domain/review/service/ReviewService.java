@@ -1,5 +1,6 @@
 package com.example.demo.domain.review.service;
 
+import com.example.demo.domain.movie.client.TmdbApiClient;
 import com.example.demo.domain.review.dto.*;
 import com.example.demo.domain.review.entity.Review;
 import com.example.demo.domain.review.repository.ReviewRepository;
@@ -9,17 +10,51 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final TmdbApiClient tmdbApiClient;
 
     @Transactional
     public Long createReview(ReviewCreateRequest request) {
         Review review = request.toEntity();
         return reviewRepository.save(review).getId();
+    }
+
+    public List<UserReviewResponse> getMyReviews(String author) {
+        List<Review> reviews = reviewRepository.findByAuthorOrderByCreatedAtDesc(author);
+        return reviews.stream().map(review -> {
+            String title = "영화 #" + review.getTmdbMovieId();
+            String poster = "";
+            try {
+                var movieDto = tmdbApiClient.getMovieDetails(review.getTmdbMovieId());
+                if (movieDto != null) {
+                    if (movieDto.getTitle() != null && !movieDto.getTitle().isBlank()) {
+                        title = movieDto.getTitle();
+                    }
+                    if (movieDto.getPosterPath() != null) {
+                        poster = movieDto.getPosterPath();
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            return UserReviewResponse.builder()
+                    .id(review.getId())
+                    .tmdbMovieId(review.getTmdbMovieId())
+                    .movieTitle(title)
+                    .moviePosterPath(poster)
+                    .author(review.getAuthor())
+                    .rating(review.getRating())
+                    .content(review.getContent())
+                    .createdAt(review.getCreatedAt())
+                    .updatedAt(review.getUpdatedAt())
+                    .build();
+        }).toList();
     }
 
     public Page<ReviewResponse> getReviewsByMovieId(Long tmdbMovieId, Pageable pageable) {

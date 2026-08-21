@@ -10,7 +10,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,6 +25,23 @@ public class ReviewController {
     public ResponseEntity<Long> createReview(@Valid @RequestBody ReviewCreateRequest request) {
         Long reviewId = reviewService.createReview(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(reviewId);
+    }
+
+    @GetMapping("/api/reviews/my")
+    public ResponseEntity<List<UserReviewResponse>> getMyReviews(
+            @RequestParam(required = false) String author,
+            Authentication authentication) {
+        String queryAuthor = author;
+        if (queryAuthor == null || queryAuthor.isBlank()) {
+            if (authentication != null && authentication.isAuthenticated()) {
+                queryAuthor = authentication.getName();
+            }
+        }
+        if (queryAuthor == null || queryAuthor.isBlank()) {
+            return ResponseEntity.ok(List.of());
+        }
+        List<UserReviewResponse> myReviews = reviewService.getMyReviews(queryAuthor);
+        return ResponseEntity.ok(myReviews);
     }
 
     @GetMapping("/api/movies/{movieId}/reviews")

@@ -72,18 +72,34 @@ export default function Navbar({
         </button>
 
         {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontWeight: '700', color: 'var(--accent-gold)' }}>
-              👤 {user.nickname}님
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => navigate('/mypage')}
+              style={{
+                background: location.pathname === '/mypage' ? 'rgba(255, 193, 7, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                color: 'var(--accent-gold)',
+                border: '1px solid rgba(255, 193, 7, 0.3)',
+                padding: '7px 14px',
+                borderRadius: '20px',
+                fontWeight: '700',
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>👤</span>
+              <span>{user.nickname}님</span>
+            </button>
             <button
               onClick={onLogout}
               style={{
-                background: 'rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.08)',
                 color: '#AAA',
-                padding: '8px 14px',
+                padding: '7px 12px',
                 borderRadius: '20px',
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 border: 'none',
                 cursor: 'pointer'
               }}

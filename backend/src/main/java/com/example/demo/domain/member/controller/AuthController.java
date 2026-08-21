@@ -58,4 +58,28 @@ public class AuthController {
         AuthResponse response = authService.me(authentication.getName());
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "프로필(닉네임) 변경", description = "현재 로그인한 사용자의 닉네임을 변경합니다.")
+    @PutMapping("/profile")
+    public ResponseEntity<AuthResponse> updateProfile(
+            Authentication authentication,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        AuthResponse response = authService.updateProfile(authentication.getName(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "비밀번호 변경", description = "현재 로그인한 사용자의 비밀번호를 변경합니다.")
+    @PutMapping("/password")
+    public ResponseEntity<Void> updatePassword(
+            Authentication authentication,
+            @Valid @RequestBody UpdatePasswordRequest request) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        authService.updatePassword(authentication.getName(), request);
+        return ResponseEntity.noContent().build();
+    }
 }

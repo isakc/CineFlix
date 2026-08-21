@@ -10,6 +10,7 @@ import PlaylistModal from "./components/PlaylistModal";
 import MovieDetailPage from "./pages/MovieDetailPage";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
+import MyPage from "./pages/MyPage";
 import { apiUrl } from "./config/api";
 
 function AppContent() {
@@ -384,6 +385,19 @@ function AppContent() {
         <Route
           path="/login"
           element={<LoginPage onAuthSuccess={handleAuthSuccess} />}
+        />
+
+        <Route
+          path="/mypage"
+          element={
+            <MyPage
+              user={user}
+              onUpdateUser={handleAuthSuccess}
+              onLogout={handleLogout}
+              userIdentifier={getUserIdentifier()}
+              onSelectMovie={handleSelectMovie}
+            />
+          }
         />
       </Routes>
 

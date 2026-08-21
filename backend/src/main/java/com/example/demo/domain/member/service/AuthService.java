@@ -72,4 +72,36 @@ public class AuthService {
                 .nickname(member.getNickname())
                 .build();
     }
+
+    @Transactional
+    public AuthResponse updateProfile(String email, com.example.demo.domain.member.dto.UpdateProfileRequest request) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+        member.updateNickname(request.getNickname());
+
+        String newToken = jwtTokenProvider.createToken(member.getEmail(), member.getNickname(), member.getRole().name());
+
+        return AuthResponse.builder()
+                .accessToken(newToken)
+                .email(member.getEmail())
+                .nickname(member.getNickname())
+                .build();
+    }
+
+    @Transactional
+    public void updatePassword(String email, com.example.demo.domain.member.dto.UpdatePasswordRequest request) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), member.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), member.getPassword())) {
+            throw new IllegalArgumentException("새 비밀번호는 이전 비밀번호와 다르게 설정해야 합니다.");
+        }
+
+        member.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+    }
 }
