@@ -186,36 +186,6 @@ export default function MovieDetailModal({ movie, user, userIdentifier, onClose 
               </div>
 
               <button
-                onClick={() => {
-                  window.open(
-                    `https://www.youtube.com/results?search_query=${encodeURIComponent((targetMovie.title || '') + ' 예고편')}`,
-                    '_blank',
-                    'noopener,noreferrer'
-                  );
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #e50914, #b20710)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '10px 18px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 4px 15px rgba(229, 9, 20, 0.4)',
-                  transition: 'transform 0.15s ease'
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.04)')}
-                onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-              >
-                <span>▶</span>
-                <span>유튜브 예고편 ↗</span>
-              </button>
-
-              <button
                 onClick={handleOpenPlaylistPicker}
                 style={{
                   background: 'rgba(255, 193, 7, 0.15)',

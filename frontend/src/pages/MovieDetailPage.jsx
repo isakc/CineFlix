@@ -297,39 +297,6 @@ export default function MovieDetailPage({ user, userIdentifier }) {
               </div>
 
               <button
-                onClick={() => {
-                  const trailerSection = document.getElementById('trailers-section');
-                  if (trailerSection) {
-                    trailerSection.scrollIntoView({ behavior: 'smooth' });
-                  } else if (trailers.length > 0) {
-                    window.open(`https://www.youtube.com/watch?v=${trailers[0].key}`, '_blank', 'noopener,noreferrer');
-                  } else {
-                    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent((movie.title || '') + ' 예고편')}`, '_blank', 'noopener,noreferrer');
-                  }
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #e50914, #b20710)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '16px',
-                  padding: '12px 24px',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  fontSize: '0.95rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 6px 20px rgba(229, 9, 20, 0.45)',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.04)')}
-                onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-              >
-                <span style={{ fontSize: '1.1rem' }}>▶</span>
-                <span>공식 예고편 ({trailers.length})</span>
-              </button>
-
-              <button
                 onClick={handleOpenPlaylistPicker}
                 style={{
                   background: 'rgba(255, 193, 7, 0.18)',
@@ -609,23 +576,19 @@ export default function MovieDetailPage({ user, userIdentifier }) {
                     </div>
                   </div>
 
-                  {/* Video Title & YouTube Direct Link Footer */}
-                  <div style={{ padding: '14px 16px', background: 'rgba(15, 15, 22, 0.95)', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  {/* Video Title Footer */}
+                  <div style={{ padding: '14px 16px', background: 'rgba(15, 15, 22, 0.95)', flex: 1, display: 'flex', alignItems: 'center' }}>
                     <div style={{
                       fontWeight: '700',
                       fontSize: '0.92rem',
                       color: '#fff',
                       lineHeight: '1.4',
-                      marginBottom: '10px',
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical',
                       overflow: 'hidden'
                     }}>
                       {vid.name}
-                    </div>
-                    <div style={{ fontSize: '0.82rem', color: '#FF4B55', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span>▶ YouTube에서 시청하기 ↗</span>
                     </div>
                   </div>
                 </a>
