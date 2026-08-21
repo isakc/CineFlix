@@ -29,8 +29,12 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const [addingToPlaylist, setAddingToPlaylist] = useState(false);
   const [addMessage, setAddMessage] = useState('');
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [movieNews, setMovieNews] = useState([]);
-  const [loadingNews, setLoadingNews] = useState(false);
+
+  // Gallery & Still Cuts
+  const [galleryImages, setGalleryImages] = useState({ backdrops: [], posters: [] });
+  const [loadingGallery, setLoadingGallery] = useState(false);
+  const [activeGalleryTab, setActiveGalleryTab] = useState('backdrops');
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   useEffect(() => {
     if (user) setAuthor(user.nickname);
@@ -41,6 +45,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       fetchMovieDetails(id);
       fetchMovieCredits(id);
       fetchMovieTrailers(id);
+      fetchMovieImages(id);
       fetchReviews(id);
       fetchRatingSummary(id);
       if (userIdentifier) {
@@ -52,20 +57,40 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
     }
   }, [id, userIdentifier]);
 
-  const fetchMovieNews = async (title) => {
-    if (!title) return;
-    setLoadingNews(true);
+  // Lightbox keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (lightboxIndex === null) return;
+      const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
+      if (currentList.length === 0) return;
+
+      if (e.key === 'Escape') {
+        setLightboxIndex(null);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        setLightboxIndex((prev) => (prev + 1) % currentList.length);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        setLightboxIndex((prev) => (prev - 1 + currentList.length) % currentList.length);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxIndex, activeGalleryTab, galleryImages]);
+
+  const fetchMovieImages = async (movieId) => {
+    setLoadingGallery(true);
     try {
-      const cleanTitle = title.replace(/^([🥇🥈🥉]|\d+위|\s|\.)+/g, '').trim();
-      const res = await fetch(apiUrl(`/api/news?query=${encodeURIComponent('영화 ' + cleanTitle)}`));
+      const res = await fetch(apiUrl(`/api/movies/${movieId}/images`));
       if (res.ok) {
         const data = await res.json();
-        setMovieNews(Array.isArray(data) ? data : []);
+        setGalleryImages({
+          backdrops: Array.isArray(data.backdrops) ? data.backdrops : [],
+          posters: Array.isArray(data.posters) ? data.posters : []
+        });
       }
     } catch (err) {
-      console.error('Failed to fetch movie news:', err);
+      console.error('Failed to fetch movie gallery images:', err);
     } finally {
-      setLoadingNews(false);
+      setLoadingGallery(false);
     }
   };
 
@@ -99,9 +124,6 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       if (res.ok) {
         const data = await res.json();
         setMovie(data);
-        if (data.title) {
-          fetchMovieNews(data.title);
-        }
       }
     } catch (err) {
       console.error('Failed to fetch movie details:', err);
@@ -728,115 +750,354 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
         )}
       </section>
 
-      {/* Movie Specific Live News Section */}
+      {/* Movie Photo Gallery & Still Cuts Section */}
       <section style={{ marginBottom: '48px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span>📰</span>
-            <span>'{movie.title}' 관련 최신 뉴스</span>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px',
+          marginBottom: '20px'
+        }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+            <span>📸</span>
+            <span>갤러리 & 현장 스틸컷</span>
           </h2>
-          {movieNews.length > 0 && (
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              실시간 언론 보도 ({movieNews.length})
-            </span>
-          )}
+
+          {/* Filter Pills */}
+          <div style={{ display: 'flex', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '4px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <button
+              onClick={() => {
+                setActiveGalleryTab('backdrops');
+                setLightboxIndex(null);
+              }}
+              style={{
+                background: activeGalleryTab === 'backdrops' ? 'var(--accent-gold)' : 'transparent',
+                color: activeGalleryTab === 'backdrops' ? '#000' : 'var(--text-secondary)',
+                border: 'none',
+                padding: '7px 16px',
+                borderRadius: '10px',
+                fontWeight: '800',
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              🎬 명장면 스틸컷 ({galleryImages.backdrops.length})
+            </button>
+            <button
+              onClick={() => {
+                setActiveGalleryTab('posters');
+                setLightboxIndex(null);
+              }}
+              style={{
+                background: activeGalleryTab === 'posters' ? 'var(--accent-gold)' : 'transparent',
+                color: activeGalleryTab === 'posters' ? '#000' : 'var(--text-secondary)',
+                border: 'none',
+                padding: '7px 16px',
+                borderRadius: '10px',
+                fontWeight: '800',
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              🎨 공식 포스터 ({galleryImages.posters.length})
+            </button>
+          </div>
         </div>
 
-        {loadingNews ? (
+        {loadingGallery ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="card-skeleton" style={{ height: '130px', borderRadius: '16px' }} />
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="card-skeleton" style={{ height: '170px', borderRadius: '16px' }} />
             ))}
-          </div>
-        ) : movieNews.length === 0 ? (
-          <div className="glass" style={{
-            padding: '30px 20px',
-            borderRadius: '16px',
-            textAlign: 'center',
-            color: 'var(--text-secondary)',
-            border: '1px solid rgba(255, 255, 255, 0.06)'
-          }}>
-            <p style={{ margin: 0, fontSize: '0.95rem' }}>
-              현재 등록된 '{movie.title}' 관련 최신 보도 기사가 없습니다.
-            </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '18px' }}>
-            {movieNews.map((item, idx) => (
-              <a
-                key={idx}
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="glass"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  padding: '20px',
+          (() => {
+            const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
+            const isPosterTab = activeGalleryTab === 'posters';
+
+            if (currentList.length === 0) {
+              return (
+                <div className="glass" style={{
+                  padding: '36px 20px',
                   borderRadius: '16px',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  transition: 'all 0.25s ease',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  background: 'rgba(255, 255, 255, 0.03)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.borderColor = 'var(--accent-gold)';
-                  e.currentTarget.style.boxShadow = '0 10px 24px rgba(255, 184, 0, 0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <span
+                  textAlign: 'center',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)'
+                }}>
+                  <p style={{ margin: 0, fontSize: '0.95rem' }}>
+                    등록된 {isPosterTab ? '포스터' : '스틸컷'} 이미지가 없습니다.
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isPosterTab ? 'repeat(auto-fill, minmax(180px, 1fr))' : 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '18px'
+              }}>
+                {currentList.map((img, idx) => {
+                  const rawPath = img.file_path || img.filePath;
+                  const thumbUrl = `https://image.tmdb.org/t/p/${isPosterTab ? 'w500' : 'w780'}${rawPath}`;
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setLightboxIndex(idx)}
+                      className="glass"
                       style={{
-                        background: 'rgba(255, 193, 7, 0.14)',
-                        color: 'var(--accent-gold)',
-                        padding: '3px 10px',
-                        borderRadius: '8px',
-                        fontSize: '0.78rem',
-                        fontWeight: '800'
+                        position: 'relative',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        aspectRatio: isPosterTab ? '2 / 3' : '16 / 9',
+                        transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                        e.currentTarget.style.borderColor = 'var(--accent-gold)';
+                        e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                        e.currentTarget.style.boxShadow = 'none';
                       }}
                     >
-                      {item.press || '언론사'}
-                    </span>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
-                      {item.pubDate || '최신'}
-                    </span>
-                  </div>
-
-                  <h3
-                    style={{
-                      fontSize: '1.05rem',
-                      fontWeight: '700',
-                      lineHeight: '1.45',
-                      color: 'var(--text-primary)',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      margin: '0 0 10px 0'
-                    }}
-                  >
-                    {item.title}
-                  </h3>
-                </div>
-
-                <div style={{ marginTop: '12px', fontSize: '0.82rem', color: 'var(--accent-gold)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>기사 전문 보기</span>
-                  <span>➔</span>
-                </div>
-              </a>
-            ))}
-          </div>
+                      <img
+                        src={thumbUrl}
+                        alt={`${movie.title} 스틸컷 ${idx + 1}`}
+                        loading="lazy"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block'
+                        }}
+                      />
+                      {/* Zoom Overlay */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)',
+                          display: 'flex',
+                          alignItems: 'flex-end',
+                          justifyContent: 'space-between',
+                          padding: '12px 14px',
+                          opacity: 0.9
+                        }}
+                      >
+                        <span style={{ fontSize: '0.78rem', color: '#FFF', fontWeight: '700', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                          #{idx + 1}
+                        </span>
+                        <span style={{
+                          background: 'rgba(0,0,0,0.65)',
+                          backdropFilter: 'blur(4px)',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontSize: '0.72rem',
+                          color: 'var(--accent-gold)',
+                          fontWeight: '800',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <span>🔍</span>
+                          <span>확대</span>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()
         )}
       </section>
+
+      {/* Lightbox High-Resolution Full-Screen Modal */}
+      {lightboxIndex !== null && (() => {
+        const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
+        const currentImg = currentList[lightboxIndex];
+        if (!currentImg) return null;
+        const rawPath = currentImg.file_path || currentImg.filePath;
+        const highResUrl = `https://image.tmdb.org/t/p/original${rawPath}`;
+
+        return (
+          <div
+            className="modal-overlay"
+            onClick={() => setLightboxIndex(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.94)',
+              backdropFilter: 'blur(12px)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              zIndex: 1300,
+              padding: '20px'
+            }}
+          >
+            {/* Top Toolbar */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: '1200px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                color: '#fff',
+                padding: '10px 0'
+              }}
+            >
+              <div style={{ fontWeight: '800', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ color: 'var(--accent-gold)' }}>📸 {movie.title}</span>
+                <span style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  padding: '2px 10px',
+                  borderRadius: '12px',
+                  fontSize: '0.85rem'
+                }}>
+                  {lightboxIndex + 1} / {currentList.length}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <a
+                  href={highResUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.12)',
+                    color: '#fff',
+                    textDecoration: 'none',
+                    padding: '8px 14px',
+                    borderRadius: '10px',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span>⬇️</span>
+                  <span>원본 크기로 보기</span>
+                </a>
+                <button
+                  onClick={() => setLightboxIndex(null)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: 'none',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    width: '38px',
+                    height: '38px',
+                    fontSize: '1.2rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Center Image Container with Prev/Next Buttons */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                maxWidth: '90vw',
+                maxHeight: '78vh',
+                margin: 'auto'
+              }}
+            >
+              {/* Prev Button */}
+              {currentList.length > 1 && (
+                <button
+                  onClick={() => setLightboxIndex((prev) => (prev - 1 + currentList.length) % currentList.length)}
+                  style={{
+                    position: 'absolute',
+                    left: '-60px',
+                    background: 'rgba(0, 0, 0, 0.65)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    width: '46px',
+                    height: '46px',
+                    fontSize: '1.4rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10
+                  }}
+                >
+                  ❮
+                </button>
+              )}
+
+              <img
+                src={highResUrl}
+                alt={`${movie.title} 스틸컷`}
+                style={{
+                  maxWidth: '85vw',
+                  maxHeight: '76vh',
+                  objectFit: 'contain',
+                  borderRadius: '12px',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+                  userSelect: 'none'
+                }}
+              />
+
+              {/* Next Button */}
+              {currentList.length > 1 && (
+                <button
+                  onClick={() => setLightboxIndex((prev) => (prev + 1) % currentList.length)}
+                  style={{
+                    position: 'absolute',
+                    right: '-60px',
+                    background: 'rgba(0, 0, 0, 0.65)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    width: '46px',
+                    height: '46px',
+                    fontSize: '1.4rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10
+                  }}
+                >
+                  ❯
+                </button>
+              )}
+            </div>
+
+            {/* Bottom Keyboard Hint */}
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', paddingBottom: '8px' }}>
+              키보드 좌우 방향키(← / →)로 이동하거나 ESC로 닫을 수 있습니다.
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Community Reviews Section */}
       <section className="glass" style={{ borderRadius: '24px', padding: '32px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>

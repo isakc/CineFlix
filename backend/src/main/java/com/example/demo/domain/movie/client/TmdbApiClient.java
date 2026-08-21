@@ -2,6 +2,8 @@ package com.example.demo.domain.movie.client;
 
 import com.example.demo.domain.movie.dto.TmdbCastDto;
 import com.example.demo.domain.movie.dto.TmdbCreditsResponse;
+import com.example.demo.domain.movie.dto.TmdbImageDto;
+import com.example.demo.domain.movie.dto.TmdbImagesResponse;
 import com.example.demo.domain.movie.dto.TmdbMovieDto;
 import com.example.demo.domain.movie.dto.TmdbMovieListResponse;
 import com.example.demo.domain.movie.dto.TmdbVideoDto;
@@ -179,6 +181,42 @@ public class TmdbApiClient {
         }
 
         return getMockMovieVideos(movieId);
+    }
+
+    public TmdbImagesResponse getMovieImages(Long movieId) {
+        if (isInvalidApiKey()) {
+            return getMockMovieImages(movieId);
+        }
+
+        try {
+            TmdbImagesResponse res = restClient.get()
+                    .uri(baseUrl + "/movie/{movieId}/images?api_key={apiKey}&include_image_language=ko,en,null", movieId, apiKey)
+                    .retrieve()
+                    .body(TmdbImagesResponse.class);
+
+            if (res != null && ((res.getBackdrops() != null && !res.getBackdrops().isEmpty()) || (res.getPosters() != null && !res.getPosters().isEmpty()))) {
+                return res;
+            }
+        } catch (Exception e) {
+            log.error("Failed to fetch movie images for TMDB ID {}: {}", movieId, e.getMessage());
+        }
+
+        return getMockMovieImages(movieId);
+    }
+
+    private TmdbImagesResponse getMockMovieImages(Long movieId) {
+        return TmdbImagesResponse.builder()
+                .id(movieId)
+                .backdrops(List.of(
+                        TmdbImageDto.builder().filePath("/xJHokMbljvjADYdit5fK5VQsXEG.jpg").aspectRatio(1.778).width(1920).height(1080).build(),
+                        TmdbImageDto.builder().filePath("/rAiYTPIHoikRefYcrqSI8KiY996.jpg").aspectRatio(1.778).width(1920).height(1080).build(),
+                        TmdbImageDto.builder().filePath("/7c9UVPPiTPltouxRVY699uCpmxX.jpg").aspectRatio(1.778).width(1920).height(1080).build(),
+                        TmdbImageDto.builder().filePath("/fCayJrkfRaCRCTh8GqRb3Yv15tn.jpg").aspectRatio(1.778).width(1920).height(1080).build()
+                ))
+                .posters(List.of(
+                        TmdbImageDto.builder().filePath("/pB82tRdUZkn8GCHX9W3G1v9v5d.jpg").aspectRatio(0.667).width(1000).height(1500).build()
+                ))
+                .build();
     }
 
     private TmdbVideoListResponse getMockMovieVideos(Long movieId) {

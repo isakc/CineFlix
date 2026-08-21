@@ -5,7 +5,6 @@ import MovieCard from "./components/MovieCard";
 import WishlistDrawer from "./components/WishlistDrawer";
 import AuthModal from "./components/AuthModal";
 import TopRatedCategorySection from "./components/TopRatedCategorySection";
-import MovieNewsSection from "./components/MovieNewsSection";
 import PlaylistModal from "./components/PlaylistModal";
 import MovieDetailPage from "./pages/MovieDetailPage";
 import SignupPage from "./pages/SignupPage";
@@ -386,15 +385,6 @@ function AppContent() {
               userIdentifier={getUserIdentifier()}
               onOpenAuth={() => setIsAuthOpen(true)}
             />
-          }
-        />
-
-        <Route
-          path="/news"
-          element={
-            <div className="container" style={{ paddingTop: "35px" }}>
-              <MovieNewsSection />
-            </div>
           }
         />
 
