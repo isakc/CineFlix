@@ -36,6 +36,10 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const [activeGalleryTab, setActiveGalleryTab] = useState('backdrops');
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
+  // 4-Item Carousel / Slide States
+  const [videoSlidePage, setVideoSlidePage] = useState(0);
+  const [photoSlidePage, setPhotoSlidePage] = useState(0);
+
   useEffect(() => {
     if (user) setAuthor(user.nickname);
   }, [user]);
@@ -588,12 +592,194 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
         )}
       </section>
 
-      {/* Official YouTube Trailers & Videos Section */}
-      <section id="trailers-section" style={{ marginBottom: '40px' }}>
-        <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span>🎞️</span>
-          <span>공식 예고편 및 관련 영상 ({trailers.length})</span>
-        </h2>
+      {/* Community Reviews Section (Placed right below Cast & above Videos) */}
+      <section className="glass" style={{ borderRadius: '24px', padding: '32px', border: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '48px' }}>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '20px' }}>✍️ 커뮤니티 리뷰 & 별점</h2>
+
+        {!user ? (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px dashed rgba(255, 255, 255, 0.18)',
+            borderRadius: '20px',
+            padding: '36px 24px',
+            textAlign: 'center',
+            marginBottom: '36px'
+          }}>
+            <div style={{ fontSize: '2.2rem', marginBottom: '10px' }}>🔒</div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', marginBottom: '8px' }}>
+              별점 및 리뷰 작성을 위해 로그인이 필요합니다
+            </h3>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => navigate('/signup')}
+                className="btn-primary"
+                style={{
+                  padding: '12px 28px',
+                  fontSize: '0.95rem',
+                  fontWeight: '800',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>✨</span>
+                <span>무료 회원가입</span>
+              </button>
+              <button
+                onClick={() => navigate('/login')}
+                className="btn-wishlist"
+                style={{
+                  padding: '12px 24px',
+                  fontSize: '0.95rem',
+                  fontWeight: '700',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#fff'
+                }}
+              >
+                <span>🔑</span>
+                <span>로그인</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form className="review-form" onSubmit={handleSubmitReview} style={{ marginBottom: '32px' }}>
+            {/* 5-Star Rating Input */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '16px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: '18px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              marginBottom: '20px'
+            }}>
+              <StarRatingInput value={rating} onChange={handleRatingChange} size={42} />
+            </div>
+
+            <div style={{ marginBottom: '14px', fontSize: '0.95rem', fontWeight: '700', color: '#E2E8F0' }}>
+              👤 작성자: <span style={{ color: 'var(--accent-gold)' }}>{user.nickname}</span> 님
+            </div>
+
+            <textarea
+              placeholder="영화에 대한 솔직한 한줄평이나 리뷰를 남겨보세요... (선택 사항)"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={4}
+            />
+            <div style={{ textAlign: 'right', marginTop: '12px' }}>
+              <button type="submit" className="btn-primary" disabled={submitting} style={{ padding: '12px 28px' }}>
+                {submitting ? '리뷰 저장 중...' : (content.trim() ? '리뷰 등록하기' : '별점 & 리뷰 저장')}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {(() => {
+          const writtenReviews = reviews.filter((r) => r.content && r.content.trim().length > 0);
+          return (
+            <>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '16px' }}>
+                💬 등록된 리뷰 목록 ({writtenReviews.length})
+              </h3>
+              {writtenReviews.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', padding: '20px 0', textAlign: 'center' }}>
+                  아직 작성된 한줄평/리뷰가 없습니다. 첫 리뷰의 주인공이 되어보세요!
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {writtenReviews.map((r) => (
+                    <div key={r.id} style={{
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      padding: '18px',
+                      borderRadius: '14px',
+                      border: '1px solid rgba(255, 255, 255, 0.05)'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '1rem' }}>{r.author}</span>
+                        <span style={{ color: 'var(--accent-gold)', fontWeight: '700' }}>★ {r.rating}</span>
+                      </div>
+                      <p style={{ color: '#D1D5DB', fontSize: '0.96rem', margin: 0 }}>{r.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()}
+      </section>
+
+      {/* Official YouTube Trailers & Videos Section (with 4-card slider) */}
+      <section id="trailers-section" style={{ marginBottom: '48px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          marginBottom: '20px'
+        }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+            <span>🎞️</span>
+            <span>공식 예고편 및 관련 영상 ({trailers.length})</span>
+          </h2>
+
+          {/* Slide Navigation Controls */}
+          {trailers.length > 4 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                {videoSlidePage + 1} / {Math.ceil(trailers.length / 4)}
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  onClick={() => setVideoSlidePage((prev) => Math.max(0, prev - 1))}
+                  disabled={videoSlidePage === 0}
+                  style={{
+                    background: videoSlidePage === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.12)',
+                    color: videoSlidePage === 0 ? '#555' : '#fff',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '10px',
+                    width: '36px',
+                    height: '36px',
+                    cursor: videoSlidePage === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.1rem',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="이전 영상"
+                >
+                  ❮
+                </button>
+                <button
+                  onClick={() => setVideoSlidePage((prev) => Math.min(Math.ceil(trailers.length / 4) - 1, prev + 1))}
+                  disabled={videoSlidePage >= Math.ceil(trailers.length / 4) - 1}
+                  style={{
+                    background: videoSlidePage >= Math.ceil(trailers.length / 4) - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.12)',
+                    color: videoSlidePage >= Math.ceil(trailers.length / 4) - 1 ? '#555' : '#fff',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '10px',
+                    width: '36px',
+                    height: '36px',
+                    cursor: videoSlidePage >= Math.ceil(trailers.length / 4) - 1 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.1rem',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="다음 영상"
+                >
+                  ❯
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {trailers.length === 0 ? (
           <div style={{
@@ -629,10 +815,10 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '20px'
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: '18px'
           }}>
-            {trailers.map((vid) => {
+            {trailers.slice(videoSlidePage * 4, (videoSlidePage + 1) * 4).map((vid) => {
               const ytUrl = `https://www.youtube.com/watch?v=${vid.key}`;
               const thumbUrl = `https://img.youtube.com/vi/${vid.key}/hqdefault.jpg`;
 
@@ -665,7 +851,6 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  {/* Thumbnail Image Container */}
                   <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', background: '#000', overflow: 'hidden' }}>
                     <img
                       src={thumbUrl}
@@ -728,7 +913,6 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                     </div>
                   </div>
 
-                  {/* Video Title Footer */}
                   <div style={{ padding: '14px 16px', background: 'rgba(15, 15, 22, 0.95)', flex: 1, display: 'flex', alignItems: 'center' }}>
                     <div style={{
                       fontWeight: '700',
@@ -750,7 +934,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
         )}
       </section>
 
-      {/* Movie Photo Gallery & Still Cuts Section */}
+      {/* Movie Photo Gallery & Still Cuts Section (with 4-card slider) */}
       <section style={{ marginBottom: '48px' }}>
         <div style={{
           display: 'flex',
@@ -765,52 +949,115 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
             <span>갤러리 & 현장 스틸컷</span>
           </h2>
 
-          {/* Filter Pills */}
-          <div style={{ display: 'flex', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '4px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <button
-              onClick={() => {
-                setActiveGalleryTab('backdrops');
-                setLightboxIndex(null);
-              }}
-              style={{
-                background: activeGalleryTab === 'backdrops' ? 'var(--accent-gold)' : 'transparent',
-                color: activeGalleryTab === 'backdrops' ? '#000' : 'var(--text-secondary)',
-                border: 'none',
-                padding: '7px 16px',
-                borderRadius: '10px',
-                fontWeight: '800',
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              🎬 명장면 스틸컷 ({galleryImages.backdrops.length})
-            </button>
-            <button
-              onClick={() => {
-                setActiveGalleryTab('posters');
-                setLightboxIndex(null);
-              }}
-              style={{
-                background: activeGalleryTab === 'posters' ? 'var(--accent-gold)' : 'transparent',
-                color: activeGalleryTab === 'posters' ? '#000' : 'var(--text-secondary)',
-                border: 'none',
-                padding: '7px 16px',
-                borderRadius: '10px',
-                fontWeight: '800',
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              🎨 공식 포스터 ({galleryImages.posters.length})
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            {/* Filter Pills */}
+            <div style={{ display: 'flex', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '4px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <button
+                onClick={() => {
+                  setActiveGalleryTab('backdrops');
+                  setPhotoSlidePage(0);
+                  setLightboxIndex(null);
+                }}
+                style={{
+                  background: activeGalleryTab === 'backdrops' ? 'var(--accent-gold)' : 'transparent',
+                  color: activeGalleryTab === 'backdrops' ? '#000' : 'var(--text-secondary)',
+                  border: 'none',
+                  padding: '7px 16px',
+                  borderRadius: '10px',
+                  fontWeight: '800',
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                🎬 명장면 스틸컷 ({galleryImages.backdrops.length})
+              </button>
+              <button
+                onClick={() => {
+                  setActiveGalleryTab('posters');
+                  setPhotoSlidePage(0);
+                  setLightboxIndex(null);
+                }}
+                style={{
+                  background: activeGalleryTab === 'posters' ? 'var(--accent-gold)' : 'transparent',
+                  color: activeGalleryTab === 'posters' ? '#000' : 'var(--text-secondary)',
+                  border: 'none',
+                  padding: '7px 16px',
+                  borderRadius: '10px',
+                  fontWeight: '800',
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                🎨 공식 포스터 ({galleryImages.posters.length})
+              </button>
+            </div>
+
+            {/* Slide Navigation Controls */}
+            {(() => {
+              const currentList = activeGalleryTab === 'backdrops' ? galleryImages.backdrops : galleryImages.posters;
+              const totalPages = Math.ceil(currentList.length / 4);
+              if (totalPages <= 1) return null;
+
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                    {photoSlidePage + 1} / {totalPages}
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      onClick={() => setPhotoSlidePage((prev) => Math.max(0, prev - 1))}
+                      disabled={photoSlidePage === 0}
+                      style={{
+                        background: photoSlidePage === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.12)',
+                        color: photoSlidePage === 0 ? '#555' : '#fff',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '10px',
+                        width: '36px',
+                        height: '36px',
+                        cursor: photoSlidePage === 0 ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.1rem',
+                        transition: 'all 0.2s ease'
+                      }}
+                      title="이전 사진"
+                    >
+                      ❮
+                    </button>
+                    <button
+                      onClick={() => setPhotoSlidePage((prev) => Math.min(totalPages - 1, prev + 1))}
+                      disabled={photoSlidePage >= totalPages - 1}
+                      style={{
+                        background: photoSlidePage >= totalPages - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.12)',
+                        color: photoSlidePage >= totalPages - 1 ? '#555' : '#fff',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '10px',
+                        width: '36px',
+                        height: '36px',
+                        cursor: photoSlidePage >= totalPages - 1 ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.1rem',
+                        transition: 'all 0.2s ease'
+                      }}
+                      title="다음 사진"
+                    >
+                      ❯
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
         {loadingGallery ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-            {[...Array(6)].map((_, i) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
+            {[...Array(4)].map((_, i) => (
               <div key={i} className="card-skeleton" style={{ height: '170px', borderRadius: '16px' }} />
             ))}
           </div>
@@ -835,20 +1082,23 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
               );
             }
 
+            const pageItems = currentList.slice(photoSlidePage * 4, (photoSlidePage + 1) * 4);
+
             return (
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: isPosterTab ? 'repeat(auto-fill, minmax(180px, 1fr))' : 'repeat(auto-fill, minmax(280px, 1fr))',
+                gridTemplateColumns: isPosterTab ? 'repeat(auto-fill, minmax(180px, 1fr))' : 'repeat(auto-fill, minmax(260px, 1fr))',
                 gap: '18px'
               }}>
-                {currentList.map((img, idx) => {
+                {pageItems.map((img, idx) => {
+                  const globalIdx = photoSlidePage * 4 + idx;
                   const rawPath = img.file_path || img.filePath;
                   const thumbUrl = `https://image.tmdb.org/t/p/${isPosterTab ? 'w500' : 'w780'}${rawPath}`;
 
                   return (
                     <div
-                      key={idx}
-                      onClick={() => setLightboxIndex(idx)}
+                      key={globalIdx}
+                      onClick={() => setLightboxIndex(globalIdx)}
                       className="glass"
                       style={{
                         position: 'relative',
@@ -872,7 +1122,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                     >
                       <img
                         src={thumbUrl}
-                        alt={`${movie.title} 스틸컷 ${idx + 1}`}
+                        alt={`${movie.title} 스틸컷 ${globalIdx + 1}`}
                         loading="lazy"
                         style={{
                           width: '100%',
@@ -881,7 +1131,6 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                           display: 'block'
                         }}
                       />
-                      {/* Zoom Overlay */}
                       <div
                         style={{
                           position: 'absolute',
@@ -895,7 +1144,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                         }}
                       >
                         <span style={{ fontSize: '0.78rem', color: '#FFF', fontWeight: '700', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
-                          #{idx + 1}
+                          #{globalIdx + 1}
                         </span>
                         <span style={{
                           background: 'rgba(0,0,0,0.65)',
@@ -1098,126 +1347,6 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
           </div>
         );
       })()}
-
-      {/* Community Reviews Section */}
-      <section className="glass" style={{ borderRadius: '24px', padding: '32px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>✍️ 커뮤니티 리뷰 & 별점</h2>
-
-        {!user ? (
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px dashed rgba(255, 255, 255, 0.18)',
-            borderRadius: '20px',
-            padding: '36px 24px',
-            textAlign: 'center',
-            marginBottom: '36px'
-          }}>
-            <div style={{ fontSize: '2.2rem', marginBottom: '10px' }}>🔒</div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', marginBottom: '8px' }}>
-              별점 및 리뷰 작성을 위해 로그인이 필요합니다
-            </h3>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => navigate('/signup')}
-                className="btn-primary"
-                style={{
-                  padding: '12px 28px',
-                  fontSize: '0.95rem',
-                  fontWeight: '800',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <span>✨</span>
-                <span>무료 회원가입</span>
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="btn-wishlist"
-                style={{
-                  padding: '12px 24px',
-                  fontSize: '0.95rem',
-                  fontWeight: '700',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#fff'
-                }}
-              >
-                <span>🔑</span>
-                <span>로그인</span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          <form className="review-form" onSubmit={handleSubmitReview} style={{ marginBottom: '32px' }}>
-            {/* Watcha-style 5-Star Rating Input */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '16px',
-              background: 'rgba(255, 255, 255, 0.03)',
-              borderRadius: '18px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              marginBottom: '20px'
-            }}>
-              <StarRatingInput value={rating} onChange={handleRatingChange} size={42} />
-            </div>
-
-            <div style={{ marginBottom: '14px', fontSize: '0.95rem', fontWeight: '700', color: '#E2E8F0' }}>
-              👤 작성자: <span style={{ color: 'var(--accent-gold)' }}>{user.nickname}</span> 님
-            </div>
-
-            <textarea
-              placeholder="영화에 대한 솔직한 한줄평이나 리뷰를 남겨보세요... (선택 사항)"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={4}
-            />
-            <div style={{ textAlign: 'right', marginTop: '12px' }}>
-              <button type="submit" className="btn-primary" disabled={submitting} style={{ padding: '12px 28px' }}>
-                {submitting ? '리뷰 저장 중...' : (content.trim() ? '리뷰 등록하기' : '별점 & 리뷰 저장')}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {(() => {
-          const writtenReviews = reviews.filter((r) => r.content && r.content.trim().length > 0);
-          return (
-            <>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '16px' }}>
-                💬 등록된 리뷰 목록 ({writtenReviews.length})
-              </h3>
-              {writtenReviews.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', padding: '20px 0', textAlign: 'center' }}>
-                  아직 작성된 한줄평/리뷰가 없습니다. 첫 리뷰의 주인공이 되어보세요!
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {writtenReviews.map((r) => (
-                    <div key={r.id} style={{
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      padding: '18px',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255, 255, 255, 0.05)'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '1rem' }}>{r.author}</span>
-                        <span style={{ color: 'var(--accent-gold)', fontWeight: '700' }}>★ {r.rating}</span>
-                      </div>
-                      <p style={{ color: '#D1D5DB', fontSize: '0.96rem', margin: 0 }}>{r.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          );
-        })()}
-      </section>
     </div>
   );
 }
