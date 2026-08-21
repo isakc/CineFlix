@@ -35,21 +35,25 @@ export default function MovieCard({ movie, rank, onSelectMovie, isWishlisted, on
             e.stopPropagation();
             onToggleWishlist(movie);
           }}
+          title={isWishlisted ? "위시리스트에서 제거" : "위시리스트에 담기"}
           style={{
             position: 'absolute',
             top: '10px',
             right: '10px',
-            background: isWishlisted ? 'rgba(229, 9, 20, 0.85)' : 'rgba(0, 0, 0, 0.6)',
-            border: 'none',
+            background: isWishlisted ? 'rgba(229, 9, 20, 0.95)' : 'rgba(0, 0, 0, 0.65)',
+            boxShadow: isWishlisted ? '0 0 16px rgba(229, 9, 20, 0.8)' : '0 2px 8px rgba(0,0,0,0.5)',
+            border: isWishlisted ? '1px solid rgba(255, 255, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '50%',
-            width: '36px',
-            height: '36px',
-            color: 'white',
-            fontSize: '1rem',
+            width: '38px',
+            height: '38px',
+            fontSize: '1.15rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'all 0.2s'
+            cursor: 'pointer',
+            transform: isWishlisted ? 'scale(1.08)' : 'scale(1)',
+            transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            backdropFilter: 'blur(6px)'
           }}
         >
           {isWishlisted ? '❤️' : '🤍'}

@@ -85,7 +85,8 @@ function AppContent() {
       );
       if (res.ok) {
         const data = await res.json();
-        setWishlists(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : (data.content || []);
+        setWishlists(list);
       }
     } catch (err) {
       console.error("Failed to fetch wishlist:", err);
@@ -93,29 +94,48 @@ function AppContent() {
   };
 
   const handleToggleWishlist = async (movie) => {
+    if (!movie || !movie.id) return;
     const userIdentifier = getUserIdentifier();
-    const isWishlisted = wishlists.some((w) => w.tmdbMovieId === movie.id);
+    const movieIdNum = Number(movie.id);
+    const isWishlisted = safeWishlists.some((w) => Number(w.tmdbMovieId) === movieIdNum);
 
     if (isWishlisted) {
-      const target = wishlists.find((w) => w.tmdbMovieId === movie.id);
-      if (!target) return;
+      const target = safeWishlists.find((w) => Number(w.tmdbMovieId) === movieIdNum);
+      // Optimistic update: instantly remove so heart turns white immediately
+      setWishlists((prev) => prev.filter((w) => Number(w.tmdbMovieId) !== movieIdNum));
+
       try {
-        const res = await fetch(apiUrl(`/api/wishlists/${target.id}`), {
-          method: "DELETE",
-        });
-        if (res.ok) {
-          fetchWishlist();
+        if (target && target.id) {
+          await fetch(apiUrl(`/api/wishlists/${target.id}`), { method: "DELETE" });
+        } else {
+          await fetch(
+            apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${movieIdNum}`),
+            { method: "DELETE" },
+          );
         }
+        fetchWishlist();
       } catch (err) {
         console.error("Failed to remove wishlist:", err);
+        fetchWishlist();
       }
     } else {
       const cleanTitle = (movie.title || "").replace(/^([🥇🥈🥉]|\d+위|\s|\.)+/g, "").trim();
+      const rawPoster = movie.poster_path || movie.posterPath || "";
+      const tempItem = {
+        id: Date.now(),
+        userIdentifier,
+        tmdbMovieId: movieIdNum,
+        movieTitle: cleanTitle,
+        posterPath: rawPoster,
+      };
+      // Optimistic update: instantly add so heart turns red with 0ms delay!
+      setWishlists((prev) => [tempItem, ...prev]);
+
       const payload = {
         userIdentifier,
-        tmdbMovieId: movie.id,
+        tmdbMovieId: movieIdNum,
         movieTitle: cleanTitle,
-        posterPath: movie.poster_path || movie.posterPath || "",
+        posterPath: rawPoster,
       };
 
       try {
@@ -129,6 +149,7 @@ function AppContent() {
         }
       } catch (err) {
         console.error("Failed to add wishlist:", err);
+        fetchWishlist();
       }
     }
   };

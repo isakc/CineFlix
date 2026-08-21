@@ -28,6 +28,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [addingToPlaylist, setAddingToPlaylist] = useState(false);
   const [addMessage, setAddMessage] = useState('');
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
     if (user) setAuthor(user.nickname);
@@ -40,8 +41,14 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       fetchMovieTrailers(id);
       fetchReviews(id);
       fetchRatingSummary(id);
+      if (userIdentifier) {
+        fetch(apiUrl(`/api/wishlists/check?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${id}`))
+          .then((res) => res.json())
+          .then((data) => setIsWishlisted(!!data))
+          .catch(() => {});
+      }
     }
-  }, [id]);
+  }, [id, userIdentifier]);
 
   const fetchMovieTrailers = async (movieId) => {
     try {
@@ -170,6 +177,33 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       console.error('Failed to add movie to playlist:', err);
     } finally {
       setAddingToPlaylist(false);
+    }
+  };
+
+  const handleToggleWishlist = async () => {
+    if (!movie || !movie.id) return;
+    const nextState = !isWishlisted;
+    setIsWishlisted(nextState);
+
+    try {
+      if (!nextState) {
+        await fetch(apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${movie.id}`), { method: 'DELETE' });
+      } else {
+        const cleanTitle = (movie.title || '').replace(/^([🥇🥈🥉]|\d+위|\s|\.)+/g, '').trim();
+        await fetch(apiUrl('/api/wishlists'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userIdentifier,
+            tmdbMovieId: movie.id,
+            movieTitle: cleanTitle,
+            posterPath: movie.poster_path || movie.posterPath || ''
+          })
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setIsWishlisted(!nextState);
     }
   };
 
@@ -351,6 +385,28 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                   유저 평점 ({ratingSummary.totalReviewCount}개 리뷰)
                 </span>
               </div>
+
+              <button
+                onClick={handleToggleWishlist}
+                style={{
+                  background: isWishlisted ? 'rgba(229, 9, 20, 0.95)' : 'rgba(255, 255, 255, 0.08)',
+                  color: isWishlisted ? '#fff' : 'var(--text-primary)',
+                  border: isWishlisted ? '1px solid rgba(255, 255, 255, 0.6)' : '1px solid var(--border-color)',
+                  boxShadow: isWishlisted ? '0 0 16px rgba(229, 9, 20, 0.7)' : 'none',
+                  borderRadius: '16px',
+                  padding: '12px 22px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                }}
+              >
+                <span>{isWishlisted ? '❤️' : '🤍'}</span>
+                <span>{isWishlisted ? '위시리스트 찜 완료' : '위시리스트 담기'}</span>
+              </button>
 
               <button
                 onClick={handleOpenPlaylistPicker}
