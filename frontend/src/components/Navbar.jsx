@@ -20,11 +20,6 @@ export default function Navbar({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleGoNews = () => {
-    navigate('/news');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <nav className="navbar">
       <div className="nav-brand" onClick={handleGoHome} style={{ cursor: 'pointer' }}>
@@ -53,18 +48,6 @@ export default function Navbar({
           }}
         >
           🎬 영화 리스트
-        </button>
-
-        <button
-          className={`btn-wishlist ${location.pathname === '/news' ? 'active' : ''}`}
-          onClick={handleGoNews}
-          style={{
-            background: location.pathname === '/news' ? 'var(--accent-gold)' : 'rgba(255, 255, 255, 0.05)',
-            color: location.pathname === '/news' ? '#000' : '#FFF',
-            fontWeight: '700'
-          }}
-        >
-          📰 영화 뉴스
         </button>
 
         {user ? (

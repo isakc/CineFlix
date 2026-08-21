@@ -29,6 +29,8 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const [addingToPlaylist, setAddingToPlaylist] = useState(false);
   const [addMessage, setAddMessage] = useState('');
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [movieNews, setMovieNews] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(false);
 
   useEffect(() => {
     if (user) setAuthor(user.nickname);
@@ -49,6 +51,23 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       }
     }
   }, [id, userIdentifier]);
+
+  const fetchMovieNews = async (title) => {
+    if (!title) return;
+    setLoadingNews(true);
+    try {
+      const cleanTitle = title.replace(/^([🥇🥈🥉]|\d+위|\s|\.)+/g, '').trim();
+      const res = await fetch(apiUrl(`/api/news?query=${encodeURIComponent('영화 ' + cleanTitle)}`));
+      if (res.ok) {
+        const data = await res.json();
+        setMovieNews(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch movie news:', err);
+    } finally {
+      setLoadingNews(false);
+    }
+  };
 
   const fetchMovieTrailers = async (movieId) => {
     try {
@@ -80,6 +99,9 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       if (res.ok) {
         const data = await res.json();
         setMovie(data);
+        if (data.title) {
+          fetchMovieNews(data.title);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch movie details:', err);
@@ -702,6 +724,116 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                 </a>
               );
             })}
+          </div>
+        )}
+      </section>
+
+      {/* Movie Specific Live News Section */}
+      <section style={{ marginBottom: '48px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span>📰</span>
+            <span>'{movie.title}' 관련 최신 뉴스</span>
+          </h2>
+          {movieNews.length > 0 && (
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              실시간 언론 보도 ({movieNews.length})
+            </span>
+          )}
+        </div>
+
+        {loadingNews ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="card-skeleton" style={{ height: '130px', borderRadius: '16px' }} />
+            ))}
+          </div>
+        ) : movieNews.length === 0 ? (
+          <div className="glass" style={{
+            padding: '30px 20px',
+            borderRadius: '16px',
+            textAlign: 'center',
+            color: 'var(--text-secondary)',
+            border: '1px solid rgba(255, 255, 255, 0.06)'
+          }}>
+            <p style={{ margin: 0, fontSize: '0.95rem' }}>
+              현재 등록된 '{movie.title}' 관련 최신 보도 기사가 없습니다.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '18px' }}>
+            {movieNews.map((item, idx) => (
+              <a
+                key={idx}
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  padding: '20px',
+                  borderRadius: '16px',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  transition: 'all 0.25s ease',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'rgba(255, 255, 255, 0.03)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.borderColor = 'var(--accent-gold)';
+                  e.currentTarget.style.boxShadow = '0 10px 24px rgba(255, 184, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span
+                      style={{
+                        background: 'rgba(255, 193, 7, 0.14)',
+                        color: 'var(--accent-gold)',
+                        padding: '3px 10px',
+                        borderRadius: '8px',
+                        fontSize: '0.78rem',
+                        fontWeight: '800'
+                      }}
+                    >
+                      {item.press || '언론사'}
+                    </span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
+                      {item.pubDate || '최신'}
+                    </span>
+                  </div>
+
+                  <h3
+                    style={{
+                      fontSize: '1.05rem',
+                      fontWeight: '700',
+                      lineHeight: '1.45',
+                      color: 'var(--text-primary)',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      margin: '0 0 10px 0'
+                    }}
+                  >
+                    {item.title}
+                  </h3>
+                </div>
+
+                <div style={{ marginTop: '12px', fontSize: '0.82rem', color: 'var(--accent-gold)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>기사 전문 보기</span>
+                  <span>➔</span>
+                </div>
+              </a>
+            ))}
           </div>
         )}
       </section>
