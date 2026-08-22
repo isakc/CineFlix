@@ -37,19 +37,6 @@ export default function Navbar({
       </form>
 
       <div className="nav-actions">
-        <button
-          className="btn-wishlist"
-          onClick={onOpenPlaylist}
-          style={{
-            background: 'rgba(255, 193, 7, 0.12)',
-            color: 'var(--accent-gold)',
-            borderColor: 'var(--accent-gold)',
-            fontWeight: '700'
-          }}
-        >
-          🎬 영화 리스트
-        </button>
-
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button

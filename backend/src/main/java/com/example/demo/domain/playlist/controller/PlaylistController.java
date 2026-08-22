@@ -34,6 +34,13 @@ public class PlaylistController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "특정 영화가 포함된 공개 컬렉션 목록 조회", description = "해당 TMDB 영화가 수록된 공개 플레이리스트(컬렉션)들을 조회합니다.")
+    @GetMapping("/containing-movie/{movieId}")
+    public ResponseEntity<List<PlaylistResponse>> getPlaylistsContainingMovie(@PathVariable Long movieId) {
+        List<PlaylistResponse> response = playlistService.getPublicPlaylistsContainingMovie(movieId);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "특정 사용자의 플레이리스트 목록 조회", description = "사용자 식별자(닉네임/게스트ID)로 작성한 플레이리스트들을 조회합니다.")
     @GetMapping("/user")
     public ResponseEntity<List<PlaylistResponse>> getUserPlaylists(@RequestParam String userIdentifier) {

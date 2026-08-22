@@ -5,6 +5,7 @@ import MovieCard from "./components/MovieCard";
 import WishlistDrawer from "./components/WishlistDrawer";
 import AuthModal from "./components/AuthModal";
 import TopRatedCategorySection from "./components/TopRatedCategorySection";
+import PublicCollectionSection from "./components/PublicCollectionSection";
 import PlaylistModal from "./components/PlaylistModal";
 import MovieDetailPage from "./pages/MovieDetailPage";
 import SignupPage from "./pages/SignupPage";
@@ -380,11 +381,18 @@ function AppContent() {
 
               {/* Top Rated Genre Category Section */}
               {viewMode === "home" && (
-                <TopRatedCategorySection
-                  onMovieClick={handleSelectMovie}
-                  wishlistMap={wishlistMap}
-                  onToggleWishlist={handleToggleWishlist}
-                />
+                <>
+                  <TopRatedCategorySection
+                    onMovieClick={handleSelectMovie}
+                    wishlistMap={wishlistMap}
+                    onToggleWishlist={handleToggleWishlist}
+                  />
+
+                  {/* Public Cinema Collections List Section */}
+                  <PublicCollectionSection
+                    onSelectMovie={handleSelectMovie}
+                  />
+                </>
               )}
             </div>
           }

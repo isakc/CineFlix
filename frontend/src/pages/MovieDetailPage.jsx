@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
 import StarRatingInput from '../components/StarRatingInput';
+import CollectionDetailModal from '../components/CollectionDetailModal';
 
 const DEFAULT_BLANK_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24"><rect width="100%" height="100%" fill="%231A1B26"/><circle cx="12" cy="8" r="4" fill="%23787C99"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" fill="%23787C99"/></svg>`;
 
@@ -14,6 +15,8 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const [reviews, setReviews] = useState([]);
   const [ratingSummary, setRatingSummary] = useState({ averageRating: 0, totalReviewCount: 0 });
   const [trailers, setTrailers] = useState([]);
+  const [containingPlaylists, setContainingPlaylists] = useState([]);
+  const [selectedCollectionModal, setSelectedCollectionModal] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Review Form
@@ -49,6 +52,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       fetchMovieCredits(id);
       fetchMovieTrailers(id);
       fetchMovieImages(id);
+      fetchContainingPlaylists(id);
       fetchReviews(id);
       fetchRatingSummary(id);
       if (user && user.nickname) {
@@ -61,6 +65,18 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       }
     }
   }, [id, user]);
+
+  const fetchContainingPlaylists = async (movieId) => {
+    try {
+      const res = await fetch(apiUrl(`/api/playlists/containing-movie/${movieId}`));
+      if (res.ok) {
+        const data = await res.json();
+        setContainingPlaylists(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch containing playlists:', err);
+    }
+  };
 
   // Lightbox keyboard navigation
   useEffect(() => {
@@ -537,7 +553,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                 </div>
                 {playlists.length === 0 ? (
                   <div style={{ fontSize: '0.88rem', color: '#AAA' }}>
-                    등록된 영화 리스트가 없습니다. 상단 [🎬 영화 리스트] 메뉴에서 먼저 새 리스트를 생성해 보세요!
+                    등록된 영화 리스트가 없습니다. [마이페이지]에서 나만의 새 영화 리스트를 생성해 보세요!
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -634,6 +650,160 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
           </div>
         )}
       </section>
+
+      {/* Playlists / Collections containing this movie */}
+      {containingPlaylists.length > 0 && (
+        <section style={{ marginBottom: '48px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '20px',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+              <span>📁</span>
+              <span>이 작품이 담긴 컬렉션 ({containingPlaylists.length})</span>
+            </h2>
+            <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+              유저들이 함께 감상하기 좋은 영화들로 큐레이션한 테마 리스트
+            </span>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '20px'
+          }}>
+            {containingPlaylists.map((col) => {
+              const items = Array.isArray(col.items) ? col.items : [];
+              const previewItems = items.slice(0, 4);
+
+              return (
+                <div
+                  key={col.id}
+                  onClick={() => setSelectedCollectionModal(col)}
+                  className="glass"
+                  style={{
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    transition: 'all 0.3s ease',
+                    background: 'rgba(255, 255, 255, 0.03)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.borderColor = 'var(--accent-gold)';
+                    e.currentTarget.style.boxShadow = '0 14px 30px rgba(0, 0, 0, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  {/* Poster Preview Mosaic */}
+                  <div style={{
+                    height: '120px',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    display: 'grid',
+                    gridTemplateColumns: previewItems.length > 0 ? `repeat(${Math.max(previewItems.length, 3)}, 1fr)` : '1fr',
+                    gap: '4px',
+                    padding: '4px'
+                  }}>
+                    {previewItems.map((item, idx) => {
+                      const rawPoster = item.posterPath || item.poster_path;
+                      const thumbUrl = (rawPoster && typeof rawPoster === 'string' && rawPoster.length > 3)
+                        ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w300${rawPoster.startsWith('/') ? rawPoster : '/' + rawPoster}`)
+                        : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop';
+
+                      return (
+                        <div key={idx} style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '6px', overflow: 'hidden' }}>
+                          <img
+                            src={thumbUrl}
+                            alt={item.movieTitle || '영화 포스터'}
+                            loading="lazy"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--accent-gold)',
+                        fontWeight: '800',
+                        background: 'rgba(255, 193, 7, 0.12)',
+                        padding: '2px 8px',
+                        borderRadius: '6px'
+                      }}>
+                        👤 {col.userIdentifier || '큐레이터'}
+                      </span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                        🎞️ {items.length}개 작품
+                      </span>
+                    </div>
+
+                    <h3 style={{
+                      fontSize: '1.02rem',
+                      fontWeight: '800',
+                      color: '#FFF',
+                      margin: '0 0 4px 0',
+                      lineHeight: '1.4',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {col.title}
+                    </h3>
+
+                    {col.description && (
+                      <p style={{
+                        fontSize: '0.82rem',
+                        color: 'var(--text-secondary)',
+                        margin: 0,
+                        lineHeight: '1.4',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {col.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {selectedCollectionModal && (
+            <CollectionDetailModal
+              collection={selectedCollectionModal}
+              onClose={() => setSelectedCollectionModal(null)}
+              onSelectMovie={(m) => {
+                navigate(`/movie/${m.id}`);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          )}
+        </section>
+      )}
 
       {/* Community Reviews Section (Placed right below Cast & above Videos) */}
       <section className="glass" style={{ borderRadius: '24px', padding: '32px', border: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '48px' }}>
