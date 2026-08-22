@@ -26,10 +26,12 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const [submitting, setSubmitting] = useState(false);
   const [ratingMessage, setRatingMessage] = useState('');
 
-  // Playlist Picker
+  // Collection Picker
   const [playlists, setPlaylists] = useState([]);
   const [showPlaylistPicker, setShowPlaylistPicker] = useState(false);
   const [addingToPlaylist, setAddingToPlaylist] = useState(false);
+  const [newCollectionTitle, setNewCollectionTitle] = useState('');
+  const [creatingQuickCollection, setCreatingQuickCollection] = useState(false);
   const [addMessage, setAddMessage] = useState('');
   const [isWishlisted, setIsWishlisted] = useState(false);
 
@@ -233,7 +235,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
 
   const handleOpenPlaylistPicker = () => {
     if (!user) {
-      if (window.confirm('내 영화 리스트에 담기 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
+      if (window.confirm('내 영화 컬렉션에 담기 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
         navigate('/login');
       }
       return;
@@ -245,7 +247,7 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const handleAddToPlaylist = async (playlistId) => {
     if (!movie) return;
     if (!user) {
-      if (window.confirm('내 영화 리스트에 담기 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
+      if (window.confirm('내 영화 컬렉션에 담기 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
         navigate('/login');
       }
       return;
@@ -266,14 +268,70 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       });
 
       if (res.ok) {
-        setAddMessage('✅ 리스트에 성공적으로 담겼습니다!');
+        setAddMessage('✅ 컬렉션에 성공적으로 담겼습니다!');
         setTimeout(() => setAddMessage(''), 2500);
         setShowPlaylistPicker(false);
+        fetchContainingPlaylists(movie.id);
       }
     } catch (err) {
       console.error('Failed to add movie to playlist:', err);
     } finally {
       setAddingToPlaylist(false);
+    }
+  };
+
+  const handleCreateAndAddToCollection = async (e) => {
+    e.preventDefault();
+    if (!newCollectionTitle.trim() || !movie) return;
+    if (!user) {
+      if (window.confirm('영화 컬렉션 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login');
+      }
+      return;
+    }
+
+    setCreatingQuickCollection(true);
+    try {
+      // 1. Create playlist
+      const createRes = await fetch(apiUrl('/api/playlists'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userIdentifier: user.nickname,
+          title: newCollectionTitle.trim(),
+          description: `${user.nickname}님의 추천 영화 컬렉션`,
+          isPublic: true,
+          public: true
+        })
+      });
+
+      if (createRes.ok) {
+        const createdPl = await createRes.json();
+        // 2. Add movie to this new playlist
+        const rawPoster = movie.poster_path || movie.posterPath || '';
+        const cleanTitle = (movie.title || '').replace(/^([🥇🥈🥉]|\d+위|\s|\.)+/g, '').trim();
+
+        await fetch(apiUrl(`/api/playlists/${createdPl.id}/movies`), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tmdbMovieId: movie.id,
+            movieTitle: cleanTitle,
+            posterPath: rawPoster
+          })
+        });
+
+        setNewCollectionTitle('');
+        setAddMessage('✅ 새 컬렉션 생성 및 영화가 담겼습니다!');
+        setTimeout(() => setAddMessage(''), 2500);
+        setShowPlaylistPicker(false);
+        fetchUserPlaylists();
+        fetchContainingPlaylists(movie.id);
+      }
+    } catch (err) {
+      console.error('Failed to create and add to collection:', err);
+    } finally {
+      setCreatingQuickCollection(false);
     }
   };
 
@@ -527,8 +585,8 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                   gap: '8px'
                 }}
               >
-                <span>🎬</span>
-                <span>내 리스트에 담기</span>
+                <span>📁</span>
+                <span>내 컬렉션에 담기</span>
               </button>
 
               {addMessage && (
@@ -538,25 +596,28 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
               )}
             </div>
 
-            {/* Playlist Picker Dropdown */}
+            {/* Collection Picker Dropdown */}
             {showPlaylistPicker && (
               <div style={{
                 background: 'rgba(20, 20, 30, 0.98)',
                 border: '1px solid var(--accent-gold)',
-                borderRadius: '16px',
-                padding: '18px',
+                borderRadius: '18px',
+                padding: '20px',
                 marginBottom: '24px',
-                maxWidth: '450px'
+                maxWidth: '480px',
+                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.6)'
               }}>
-                <div style={{ fontWeight: '700', marginBottom: '12px', color: '#fff', fontSize: '0.95rem' }}>
-                  📂 담을 영화 리스트 선택:
+                <div style={{ fontWeight: '800', marginBottom: '12px', color: '#fff', fontSize: '0.98rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>📁 담을 영화 컬렉션 선택:</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--accent-gold)' }}>총 {playlists.length}개</span>
                 </div>
+
                 {playlists.length === 0 ? (
-                  <div style={{ fontSize: '0.88rem', color: '#AAA' }}>
-                    등록된 영화 리스트가 없습니다. [마이페이지]에서 나만의 새 영화 리스트를 생성해 보세요!
+                  <div style={{ fontSize: '0.88rem', color: '#AAA', marginBottom: '14px', lineHeight: '1.4' }}>
+                    아직 생성된 컬렉션이 없습니다. 아래에서 새 컬렉션 이름을 입력하고 바로 생성해 보세요!
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto', marginBottom: '14px', paddingRight: '4px' }}>
                     {playlists.map((pl) => (
                       <button
                         key={pl.id}
@@ -574,15 +635,63 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
                           fontSize: '0.9rem',
                           display: 'flex',
                           justifyContent: 'space-between',
-                          alignItems: 'center'
+                          alignItems: 'center',
+                          transition: 'background 0.2s ease'
                         }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 193, 7, 0.2)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)')}
                       >
-                        <span>🎬 {pl.title}</span>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--accent-gold)' }}>+ 담기</span>
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>
+                          📁 {pl.title}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--accent-gold)', fontWeight: '800', flexShrink: 0 }}>
+                          + 담기
+                        </span>
                       </button>
                     ))}
                   </div>
                 )}
+
+                {/* Quick Create New Collection Form */}
+                <form
+                  onSubmit={handleCreateAndAddToCollection}
+                  style={{
+                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                    paddingTop: '14px',
+                    display: 'flex',
+                    gap: '8px'
+                  }}
+                >
+                  <input
+                    type="text"
+                    placeholder="새 컬렉션 이름 입력..."
+                    value={newCollectionTitle}
+                    onChange={(e) => setNewCollectionTitle(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '9px 14px',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      fontSize: '0.88rem'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={creatingQuickCollection || !newCollectionTitle.trim()}
+                    className="btn-primary"
+                    style={{
+                      padding: '9px 16px',
+                      fontSize: '0.85rem',
+                      fontWeight: '800',
+                      whiteSpace: 'nowrap',
+                      borderRadius: '10px'
+                    }}
+                  >
+                    {creatingQuickCollection ? '생성 중...' : '➕ 생성 & 담기'}
+                  </button>
+                </form>
               </div>
             )}
 

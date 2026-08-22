@@ -390,6 +390,7 @@ function AppContent() {
 
                   {/* Public Cinema Collections List Section */}
                   <PublicCollectionSection
+                    user={user}
                     onSelectMovie={handleSelectMovie}
                   />
                 </>

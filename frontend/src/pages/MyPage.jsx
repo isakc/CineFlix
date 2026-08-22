@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiUrl } from '../config/api';
 import StarRatingInput from '../components/StarRatingInput';
+import CollectionDetailModal from '../components/CollectionDetailModal';
 
 export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, onSelectMovie }) {
   const navigate = useNavigate();
@@ -14,6 +15,14 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
   const [myPlaylists, setMyPlaylists] = useState([]);
   const [myWishlists, setMyWishlists] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Collection Create & Modal States
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+  const [creatingCollection, setCreatingCollection] = useState(false);
+  const [selectedMyCollection, setSelectedMyCollection] = useState(null);
 
   // Profile Edit State
   const [newNickname, setNewNickname] = useState(user ? user.nickname : '');
@@ -366,7 +375,7 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
             <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#fff' }}>
               {myPlaylists.length}
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>플레이리스트</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>영화 컬렉션</div>
           </div>
 
           <div
@@ -434,8 +443,8 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
             gap: '8px'
           }}
         >
-          <span>🎬</span>
-          <span>내 플레이리스트 ({myPlaylists.length})</span>
+          <span>📁</span>
+          <span>내 영화 컬렉션 ({myPlaylists.length})</span>
         </button>
 
         <button
@@ -634,9 +643,205 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
         </div>
       )}
 
-      {/* TAB 2: My Playlists */}
+      {/* TAB 2: My Collections */}
       {activeTab === 'playlists' && (
         <div>
+          {/* Header Action Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>📁</span>
+                <span>내 영화 컬렉션 ({myPlaylists.length})</span>
+              </h2>
+              <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                나만의 테마로 영화들을 모아 컬렉션을 구성해보세요.
+              </span>
+            </div>
+
+            <button
+              onClick={() => setShowCreateModal(true)}
+              style={{
+                background: 'linear-gradient(135deg, #FFB800, #FF8C00)',
+                color: '#000',
+                border: 'none',
+                padding: '10px 22px',
+                borderRadius: '14px',
+                fontWeight: '800',
+                fontSize: '0.92rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 14px rgba(255, 184, 0, 0.35)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span>➕</span>
+              <span>새 컬렉션 만들기</span>
+            </button>
+          </div>
+
+          {/* Create Collection Modal */}
+          {showCreateModal && (
+            <div
+              className="modal-overlay"
+              onClick={() => setShowCreateModal(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0, 0, 0, 0.85)',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1400,
+                padding: '20px'
+              }}
+            >
+              <div
+                className="glass"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: '100%',
+                  maxWidth: '520px',
+                  borderRadius: '24px',
+                  padding: '30px',
+                  background: 'rgba(20, 20, 30, 0.98)',
+                  border: '1px solid rgba(255, 193, 7, 0.4)',
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>📁</span>
+                    <span>새 영화 컬렉션 만들기</span>
+                  </h3>
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    style={{ background: 'none', border: 'none', color: '#888', fontSize: '1.2rem', cursor: 'pointer' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!newTitle.trim()) return;
+
+                  setCreatingCollection(true);
+                  try {
+                    const res = await fetch(apiUrl('/api/playlists'), {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userIdentifier: user.nickname,
+                        title: newTitle.trim(),
+                        description: newDesc.trim(),
+                        isPublic: Boolean(isPublic),
+                        public: Boolean(isPublic)
+                      })
+                    });
+
+                    if (res.ok) {
+                      setNewTitle('');
+                      setNewDesc('');
+                      setIsPublic(true);
+                      setShowCreateModal(false);
+                      fetchUserData();
+                    }
+                  } catch (err) {
+                    console.error('Failed to create collection:', err);
+                  } finally {
+                    setCreatingCollection(false);
+                  }
+                }}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '700', color: '#E2E8F0', marginBottom: '8px' }}>
+                      컬렉션 제목 <span style={{ color: '#e50914' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="예: 비 오는 날 보고 싶은 감성 영화 명작선"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '12px',
+                        color: '#fff',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '700', color: '#E2E8F0', marginBottom: '8px' }}>
+                      컬렉션 소개 및 설명 (선택)
+                    </label>
+                    <textarea
+                      placeholder="이 컬렉션에 대한 짧은 소개나 추천 이유를 적어보세요..."
+                      value={newDesc}
+                      onChange={(e) => setNewDesc(e.target.value)}
+                      rows={3}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '12px',
+                        color: '#fff',
+                        fontSize: '0.95rem',
+                        resize: 'none'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input
+                      type="checkbox"
+                      id="isPublicCheck"
+                      checked={isPublic}
+                      onChange={(e) => setIsPublic(e.target.checked)}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-gold)' }}
+                    />
+                    <label htmlFor="isPublicCheck" style={{ fontSize: '0.9rem', color: '#E2E8F0', cursor: 'pointer' }}>
+                      🌐 <strong>전체 공개</strong> (체크 시 메인 추천 컬렉션에 노출됩니다)
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateModal(false)}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        color: '#CCC',
+                        border: 'none',
+                        padding: '10px 20px',
+                        borderRadius: '12px',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={creatingCollection}
+                      className="btn-primary"
+                      style={{ padding: '10px 24px', fontWeight: '800' }}
+                    >
+                      {creatingCollection ? '생성 중...' : '✓ 컬렉션 생성'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {myPlaylists.length === 0 ? (
             <div
               className="glass"
@@ -647,67 +852,191 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                 border: '1px dashed rgba(255, 255, 255, 0.15)'
               }}
             >
-              <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎬</div>
+              <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📁</div>
               <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#fff', marginBottom: '8px' }}>
-                생성된 플레이리스트가 없습니다
+                생성된 영화 컬렉션이 없습니다
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '24px' }}>
-                영화 상세 페이지에서 [🎬 내 리스트에 담기] 버튼을 눌러 나만의 영화 컬렉션을 만들어보세요!
+                상단의 [➕ 새 컬렉션 만들기]를 누르거나 영화 상세 페이지에서 [📁 내 컬렉션에 담기]를 통해 컬렉션을 시작해보세요!
               </p>
-              <Link to="/" className="btn-primary" style={{ textDecoration: 'none', padding: '12px 28px' }}>
-                영화 탐색하러 가기
-              </Link>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="btn-primary"
+                style={{ padding: '12px 28px', fontWeight: '800' }}
+              >
+                ➕ 첫 컬렉션 만들기
+              </button>
             </div>
           ) : (
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                 gap: '20px'
               }}
             >
-              {myPlaylists.map((pl) => (
-                <div
-                  key={pl.id}
-                  className="glass"
-                  style={{
-                    borderRadius: '20px',
-                    padding: '24px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: '16px'
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--accent-gold)', fontWeight: '800' }}>
-                        PLAYLIST #{pl.id}
-                      </span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        🎬 {pl.movieCount || (pl.items ? pl.items.length : 0)}편 수록
-                      </span>
-                    </div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#fff', margin: '0 0 8px 0' }}>
-                      {pl.title}
-                    </h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
-                      {pl.description || '플레이리스트 설명이 없습니다.'}
-                    </p>
-                  </div>
+              {myPlaylists.map((pl) => {
+                const items = Array.isArray(pl.items) ? pl.items : [];
+                const previewItems = items.slice(0, 4);
 
-                  <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#888' }}>
-                      {pl.createdAt ? new Date(pl.createdAt).toLocaleDateString() : ''}
-                    </span>
-                    <span style={{ color: 'var(--accent-gold)', fontWeight: '700', fontSize: '0.88rem' }}>
-                      {pl.isPublic ? '🌐 전체 공개' : '🔒 나만 보기'}
-                    </span>
+                return (
+                  <div
+                    key={pl.id}
+                    className="glass"
+                    onClick={() => setSelectedMyCollection(pl)}
+                    style={{
+                      borderRadius: '20px',
+                      padding: '22px',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '16px',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease',
+                      background: 'rgba(255, 255, 255, 0.03)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.borderColor = 'var(--accent-gold)';
+                      e.currentTarget.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    <div>
+                      {/* Mosaic Poster Preview */}
+                      <div style={{
+                        height: '110px',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        display: 'grid',
+                        gridTemplateColumns: previewItems.length > 0 ? `repeat(${Math.max(previewItems.length, 3)}, 1fr)` : '1fr',
+                        gap: '4px',
+                        padding: '4px',
+                        marginBottom: '14px'
+                      }}>
+                        {previewItems.length === 0 ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: '0.85rem' }}>
+                            수록된 영화 없음
+                          </div>
+                        ) : (
+                          previewItems.map((item, idx) => {
+                            const rawPoster = item.posterPath || item.poster_path;
+                            const thumbUrl = (rawPoster && typeof rawPoster === 'string' && rawPoster.length > 3)
+                              ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w300${rawPoster.startsWith('/') ? rawPoster : '/' + rawPoster}`)
+                              : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop';
+
+                            return (
+                              <div key={idx} style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '6px', overflow: 'hidden' }}>
+                                <img
+                                  src={thumbUrl}
+                                  alt={item.movieTitle || '영화 포스터'}
+                                  loading="lazy"
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                  }}
+                                />
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--accent-gold)', fontWeight: '800', background: 'rgba(255, 193, 7, 0.12)', padding: '2px 8px', borderRadius: '6px' }}>
+                          COLLECTION #{pl.id}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                          🎬 {items.length}편 수록
+                        </span>
+                      </div>
+
+                      <h3 style={{ fontSize: '1.18rem', fontWeight: '800', color: '#fff', margin: '0 0 8px 0', lineHeight: '1.4' }}>
+                        {pl.title}
+                      </h3>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: '1.5', margin: 0 }}>
+                        {pl.description || '컬렉션 설명이 없습니다.'}
+                      </p>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: pl.isPublic ? 'var(--accent-gold)' : '#888', fontWeight: '700', fontSize: '0.85rem' }}>
+                        {pl.isPublic ? '🌐 전체 공개' : '🔒 나만 보기'}
+                      </span>
+
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedMyCollection(pl);
+                          }}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '0.82rem',
+                            fontWeight: '700'
+                          }}
+                        >
+                          👁️ 보기
+                        </button>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!window.confirm(`'${pl.title}' 컬렉션을 정말로 삭제하시겠습니까?`)) return;
+
+                            try {
+                              const res = await fetch(apiUrl(`/api/playlists/${pl.id}?userIdentifier=${encodeURIComponent(user.nickname)}`), {
+                                method: 'DELETE'
+                              });
+                              if (res.ok) {
+                                setMyPlaylists((prev) => prev.filter((p) => p.id !== pl.id));
+                              }
+                            } catch (err) {
+                              console.error('Failed to delete collection:', err);
+                            }
+                          }}
+                          style={{
+                            background: 'rgba(229, 9, 20, 0.15)',
+                            color: '#FF6B6B',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '0.82rem',
+                            fontWeight: '700'
+                          }}
+                        >
+                          🗑️ 삭제
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+          )}
+
+          {/* Collection Detail Modal */}
+          {selectedMyCollection && (
+            <CollectionDetailModal
+              collection={selectedMyCollection}
+              onClose={() => setSelectedMyCollection(null)}
+              onSelectMovie={(m) => {
+                navigate(`/movie/${m.id}`);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
           )}
         </div>
       )}

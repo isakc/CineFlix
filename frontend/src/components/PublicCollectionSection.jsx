@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
 import CollectionDetailModal from './CollectionDetailModal';
 
-export default function PublicCollectionSection({ onSelectMovie }) {
+export default function PublicCollectionSection({ user, onSelectMovie }) {
+  const navigate = useNavigate();
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCollection, setSelectedCollection] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [creatingCollection, setCreatingCollection] = useState(false);
 
   useEffect(() => {
     fetchPublicCollections();
@@ -26,6 +32,47 @@ export default function PublicCollectionSection({ onSelectMovie }) {
     }
   };
 
+  const handleOpenCreateModal = () => {
+    if (!user) {
+      if (window.confirm('나만의 영화 컬렉션 만들기 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login');
+      }
+      return;
+    }
+    setShowCreateModal(true);
+  };
+
+  const handleCreateCollection = async (e) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+
+    setCreatingCollection(true);
+    try {
+      const res = await fetch(apiUrl('/api/playlists'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userIdentifier: user.nickname,
+          title: newTitle.trim(),
+          description: newDesc.trim(),
+          isPublic: true,
+          public: true
+        })
+      });
+
+      if (res.ok) {
+        setNewTitle('');
+        setNewDesc('');
+        setShowCreateModal(false);
+        fetchPublicCollections();
+      }
+    } catch (err) {
+      console.error('Failed to create collection:', err);
+    } finally {
+      setCreatingCollection(false);
+    }
+  };
+
   if (!loading && collections.length === 0) {
     return null;
   }
@@ -40,21 +87,163 @@ export default function PublicCollectionSection({ onSelectMovie }) {
         flexWrap: 'wrap',
         gap: '12px'
       }}>
-        <h2 style={{
-          fontSize: '1.8rem',
-          fontWeight: '800',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          margin: 0
-        }}>
-          <span>✨</span>
-          <span>테마별 추천 영화 컬렉션</span>
-        </h2>
-        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          유저들이 직접 큐레이션한 명작 리스트
-        </span>
+        <div>
+          <h2 style={{
+            fontSize: '1.8rem',
+            fontWeight: '800',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            margin: '0 0 4px 0'
+          }}>
+            <span>✨</span>
+            <span>테마별 추천 영화 컬렉션</span>
+          </h2>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            유저들이 직접 큐레이션한 명작 리스트
+          </span>
+        </div>
+
+        <button
+          onClick={handleOpenCreateModal}
+          style={{
+            background: 'linear-gradient(135deg, #FFB800, #FF8C00)',
+            color: '#000',
+            border: 'none',
+            padding: '10px 22px',
+            borderRadius: '14px',
+            fontWeight: '800',
+            fontSize: '0.92rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 4px 14px rgba(255, 184, 0, 0.35)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <span>➕</span>
+          <span>나만의 컬렉션 만들기</span>
+        </button>
       </div>
+
+      {/* Create Collection Modal */}
+      {showCreateModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowCreateModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1400,
+            padding: '20px'
+          }}
+        >
+          <div
+            className="glass"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              borderRadius: '24px',
+              padding: '30px',
+              background: 'rgba(20, 20, 30, 0.98)',
+              border: '1px solid rgba(255, 193, 7, 0.4)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>📁</span>
+                <span>새 영화 컬렉션 만들기</span>
+              </h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                style={{ background: 'none', border: 'none', color: '#888', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCollection}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '700', color: '#E2E8F0', marginBottom: '8px' }}>
+                  컬렉션 제목 <span style={{ color: '#e50914' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="예: 비 오는 날 보고 싶은 감성 영화 명작선"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '12px',
+                    color: '#fff',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '700', color: '#E2E8F0', marginBottom: '8px' }}>
+                  컬렉션 소개 및 설명 (선택)
+                </label>
+                <textarea
+                  placeholder="이 컬렉션에 대한 짧은 소개나 추천 이유를 적어보세요..."
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '12px',
+                    color: '#fff',
+                    fontSize: '0.95rem',
+                    resize: 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#CCC',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '12px',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingCollection}
+                  className="btn-primary"
+                  style={{ padding: '10px 24px', fontWeight: '800' }}
+                >
+                  {creatingCollection ? '생성 중...' : '✓ 컬렉션 생성'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div style={{
