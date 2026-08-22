@@ -8,6 +8,7 @@ export default function PublicCollectionSection({ user, onSelectMovie }) {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCollection, setSelectedCollection] = useState(null);
+  const [visibleLimit, setVisibleLimit] = useState(4);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -78,7 +79,7 @@ export default function PublicCollectionSection({ user, onSelectMovie }) {
   }
 
   return (
-    <section style={{ marginTop: '50px', marginBottom: '60px' }}>
+    <section id="public-collections-section" style={{ marginTop: '50px', marginBottom: '60px' }}>
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -100,7 +101,7 @@ export default function PublicCollectionSection({ user, onSelectMovie }) {
             <span>테마별 추천 영화 컬렉션</span>
           </h2>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            유저들이 직접 큐레이션한 명작 리스트
+            유저들이 직접 큐레이션한 명작 리스트 (총 {collections.length}개)
           </span>
         </div>
 
@@ -256,155 +257,224 @@ export default function PublicCollectionSection({ user, onSelectMovie }) {
           ))}
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: '22px'
-        }}>
-          {collections.map((col) => {
-            const items = Array.isArray(col.items) ? col.items : [];
-            const previewItems = items.slice(0, 4);
+        <>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '22px'
+          }}>
+            {collections.slice(0, visibleLimit).map((col) => {
+              const items = Array.isArray(col.items) ? col.items : [];
+              const previewItems = items.slice(0, 4);
 
-            return (
-              <div
-                key={col.id}
-                onClick={() => setSelectedCollection(col)}
-                className="glass"
-                style={{
-                  borderRadius: '20px',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  padding: '18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '14px',
-                  transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  position: 'relative'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-6px)';
-                  e.currentTarget.style.borderColor = 'var(--accent-gold)';
-                  e.currentTarget.style.boxShadow = '0 16px 36px rgba(0, 0, 0, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                {/* Poster Preview Mosaic */}
-                <div style={{
-                  height: '140px',
-                  borderRadius: '14px',
-                  overflow: 'hidden',
-                  background: 'rgba(0, 0, 0, 0.5)',
-                  display: 'grid',
-                  gridTemplateColumns: previewItems.length > 0 ? `repeat(${Math.max(previewItems.length, 3)}, 1fr)` : '1fr',
-                  gap: '4px',
-                  padding: '4px'
-                }}>
-                  {previewItems.length === 0 ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: '0.85rem' }}>
-                      영화 미등록
-                    </div>
-                  ) : (
-                    previewItems.map((item, idx) => {
-                      const rawPoster = item.posterPath || item.poster_path;
-                      const thumbUrl = (rawPoster && typeof rawPoster === 'string' && rawPoster.length > 3)
-                        ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w300${rawPoster.startsWith('/') ? rawPoster : '/' + rawPoster}`)
-                        : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop';
+              return (
+                <div
+                  key={col.id}
+                  onClick={() => setSelectedCollection(col)}
+                  className="glass"
+                  style={{
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '18px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '14px',
+                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    position: 'relative'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-6px)';
+                    e.currentTarget.style.borderColor = 'var(--accent-gold)';
+                    e.currentTarget.style.boxShadow = '0 16px 36px rgba(0, 0, 0, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  {/* Poster Preview Mosaic */}
+                  <div style={{
+                    height: '140px',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    display: 'grid',
+                    gridTemplateColumns: previewItems.length > 0 ? `repeat(${Math.max(previewItems.length, 3)}, 1fr)` : '1fr',
+                    gap: '4px',
+                    padding: '4px'
+                  }}>
+                    {previewItems.length === 0 ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: '0.85rem' }}>
+                        영화 미등록
+                      </div>
+                    ) : (
+                      previewItems.map((item, idx) => {
+                        const rawPoster = item.posterPath || item.poster_path;
+                        const thumbUrl = (rawPoster && typeof rawPoster === 'string' && rawPoster.length > 3)
+                          ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w300${rawPoster.startsWith('/') ? rawPoster : '/' + rawPoster}`)
+                          : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop';
 
-                      return (
-                        <div key={idx} style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '8px', overflow: 'hidden' }}>
-                          <img
-                            src={thumbUrl}
-                            alt={item.movieTitle || '영화 포스터'}
-                            loading="lazy"
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop';
-                            }}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover'
-                            }}
-                          />
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                {/* Collection Meta Info */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--accent-gold)',
-                        fontWeight: '800',
-                        background: 'rgba(255, 193, 7, 0.12)',
-                        padding: '2px 8px',
-                        borderRadius: '6px'
-                      }}>
-                        👤 {col.userIdentifier || '큐레이터'}
-                      </span>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
-                        🎞️ {items.length}개 작품
-                      </span>
-                    </div>
-
-                    <h3 style={{
-                      fontSize: '1.08rem',
-                      fontWeight: '800',
-                      color: '#FFF',
-                      margin: '0 0 6px 0',
-                      lineHeight: '1.4',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 1,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}>
-                      {col.title}
-                    </h3>
-
-                    {col.description && (
-                      <p style={{
-                        fontSize: '0.84rem',
-                        color: 'var(--text-secondary)',
-                        margin: 0,
-                        lineHeight: '1.4',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
-                      }}>
-                        {col.description}
-                      </p>
+                        return (
+                          <div key={idx} style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '8px', overflow: 'hidden' }}>
+                            <img
+                              src={thumbUrl}
+                              alt={item.movieTitle || '영화 포스터'}
+                              loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop';
+                              }}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          </div>
+                        );
+                      })
                     )}
                   </div>
 
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    color: 'var(--accent-gold)',
-                    fontSize: '0.82rem',
-                    fontWeight: '700',
-                    gap: '4px',
-                    paddingTop: '6px'
-                  }}>
-                    <span>컬렉션 보기</span>
-                    <span>➔</span>
+                  {/* Collection Meta Info */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--accent-gold)',
+                          fontWeight: '800',
+                          background: 'rgba(255, 193, 7, 0.12)',
+                          padding: '2px 8px',
+                          borderRadius: '6px'
+                        }}>
+                          👤 {col.userIdentifier || '큐레이터'}
+                        </span>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                          🎞️ {items.length}개 작품
+                        </span>
+                      </div>
+
+                      <h3 style={{
+                        fontSize: '1.08rem',
+                        fontWeight: '800',
+                        color: '#FFF',
+                        margin: '0 0 6px 0',
+                        lineHeight: '1.4',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {col.title}
+                      </h3>
+
+                      {col.description && (
+                        <p style={{
+                          fontSize: '0.84rem',
+                          color: 'var(--text-secondary)',
+                          margin: 0,
+                          lineHeight: '1.4',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}>
+                          {col.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      color: 'var(--accent-gold)',
+                      fontSize: '0.82rem',
+                      fontWeight: '700',
+                      gap: '4px',
+                      paddingTop: '6px'
+                    }}>
+                      <span>컬렉션 보기</span>
+                      <span>➔</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {/* More / Collapse Button Controls */}
+          {collections.length > 4 && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
+              {visibleLimit < collections.length ? (
+                <button
+                  onClick={() => setVisibleLimit((prev) => Math.min(prev + 4, collections.length))}
+                  style={{
+                    padding: '13px 32px',
+                    fontSize: '0.96rem',
+                    fontWeight: '800',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    borderRadius: '16px',
+                    background: 'rgba(255, 193, 7, 0.12)',
+                    border: '1px solid var(--accent-gold)',
+                    color: 'var(--accent-gold)',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 18px rgba(0, 0, 0, 0.4)',
+                    transition: 'all 0.25s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--accent-gold)';
+                    e.currentTarget.style.color = '#000';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 184, 0, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 193, 7, 0.12)';
+                    e.currentTarget.style.color = 'var(--accent-gold)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.4)';
+                  }}
+                >
+                  <span>✨ 더 많은 추천 컬렉션 더보기 ({collections.length - visibleLimit}개 남음)</span>
+                  <span>▾</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setVisibleLimit(4);
+                    const el = document.getElementById('public-collections-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  style={{
+                    padding: '11px 26px',
+                    fontSize: '0.9rem',
+                    fontWeight: '700',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    borderRadius: '14px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.18)',
+                    color: '#FFF',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)')}
+                >
+                  <span>▴ 접기 (기본 4개로 보기)</span>
+                </button>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* Collection Full View Modal */}
