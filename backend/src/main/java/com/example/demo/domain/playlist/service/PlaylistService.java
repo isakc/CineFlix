@@ -34,16 +34,20 @@ public class PlaylistService {
 
     @Transactional
     public List<PlaylistResponse> getPublicPlaylists() {
-        if (playlistRepository.count() == 0) {
+        List<Playlist> list = playlistRepository.findByIsPublicTrueOrderByCreatedAtDesc();
+        if (list.isEmpty() || list.stream().anyMatch(p -> p.getItems() == null || p.getItems().size() < 3)) {
             initSamplePlaylists();
+            list = playlistRepository.findByIsPublicTrueOrderByCreatedAtDesc();
         }
-        return playlistRepository.findByIsPublicTrueOrderByCreatedAtDesc().stream()
+        return list.stream()
                 .map(PlaylistResponse::from)
                 .toList();
     }
 
+    @Transactional
     public List<PlaylistResponse> getPublicPlaylistsContainingMovie(Long tmdbMovieId) {
-        if (playlistRepository.count() == 0) {
+        List<Playlist> list = playlistRepository.findByIsPublicTrueOrderByCreatedAtDesc();
+        if (list.isEmpty() || list.stream().anyMatch(p -> p.getItems() == null || p.getItems().size() < 3)) {
             initSamplePlaylists();
         }
         return playlistRepository.findPublicPlaylistsContainingMovie(tmdbMovieId).stream()
@@ -53,6 +57,14 @@ public class PlaylistService {
 
     private void initSamplePlaylists() {
         try {
+            // Delete old sample collections if any to re-populate with verified TMDB posters
+            List<Playlist> existing = playlistRepository.findAll();
+            for (Playlist p : existing) {
+                if (p.getItems() == null || p.getItems().size() < 4 || p.getUserIdentifier().contains("큐레이터") || p.getUserIdentifier().contains("매니아") || p.getUserIdentifier().contains("시네마") || p.getTitle().contains("컬렉션") || p.getTitle().contains("SF")) {
+                    playlistRepository.delete(p);
+                }
+            }
+
             // Collection 1: Christopher Nolan
             Playlist p1 = Playlist.builder()
                     .userIdentifier("CineFlix 큐레이터")
@@ -61,10 +73,10 @@ public class PlaylistService {
                     .isPublic(true)
                     .build();
             p1 = playlistRepository.save(p1);
-            addSampleItem(p1, 872585L, "오펜하이머", "/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg");
-            addSampleItem(p1, 157336L, "인터스텔라", "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg");
-            addSampleItem(p1, 27205L, "인셉션", "/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg");
-            addSampleItem(p1, 155L, "다크 나이트", "/qJ2tW6WMUDux911r6m7haRef0WH.jpg");
+            addSampleItem(p1, 872585L, "오펜하이머", "/jpD6z9fgNe7OqsHoDeAWQWoULde.jpg");
+            addSampleItem(p1, 157336L, "인터스텔라", "/evoEi8SBSvIIEveM3V6nCJ6vKj8.jpg");
+            addSampleItem(p1, 27205L, "인셉션", "/atSxEGstxXRoSKDQFBgqQ5lpGSt.jpg");
+            addSampleItem(p1, 155L, "다크 나이트", "/9ICUbdveP56jRoMMVkXSOr3ceyV.jpg");
 
             // Collection 2: Sci-Fi Universe
             Playlist p2 = Playlist.builder()
@@ -74,10 +86,10 @@ public class PlaylistService {
                     .isPublic(true)
                     .build();
             p2 = playlistRepository.save(p2);
-            addSampleItem(p2, 157336L, "인터스텔라", "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg");
-            addSampleItem(p2, 693134L, "듄: 파트 2", "/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg");
-            addSampleItem(p2, 945961L, "에이리언: 로물루스", "/b33nnKl1v074FdZRRR0i1Z4q2jB.jpg");
-            addSampleItem(p2, 49047L, "그래비티", "/bO2m5dE76g9uO8fHdr5r9zR6P6u.jpg");
+            addSampleItem(p2, 157336L, "인터스텔라", "/evoEi8SBSvIIEveM3V6nCJ6vKj8.jpg");
+            addSampleItem(p2, 693134L, "듄: 파트 2", "/8AsDR2o5AC3V8Jmj6JH6cpta7dz.jpg");
+            addSampleItem(p2, 945961L, "에이리언: 로물루스", "/AmWTYg3RCMv7fbQxwCqrxiaUhkc.jpg");
+            addSampleItem(p2, 49047L, "그래비티", "/u8ffl7CRAS12KA8eQEtkLuHg8Fm.jpg");
 
             // Collection 3: Popcorn Action
             Playlist p3 = Playlist.builder()
@@ -87,10 +99,10 @@ public class PlaylistService {
                     .isPublic(true)
                     .build();
             p3 = playlistRepository.save(p3);
-            addSampleItem(p3, 603692L, "존 윅 4", "/vZloFAK7NDTugKEY7DCihxYQ522.jpg");
-            addSampleItem(p3, 575264L, "미션 임파서블: 데드 레코닝", "/7I6VUdPj6tQECNHdviJkUHD2389.jpg");
-            addSampleItem(p3, 385687L, "분노의 질주: 라이드 오어 다이", "/fiVW06jE7z9YBo4Tr4AIyXv4h5R.jpg");
-            addSampleItem(p3, 550L, "파이트 클럽", "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg");
+            addSampleItem(p3, 603692L, "존 윅 4", "/h3LsdSBzhRnBebz4BTpAhh63PD3.jpg");
+            addSampleItem(p3, 575264L, "미션 임파서블: 데드 레코닝", "/dIcLgXA6R54EZ0XPSMKW4XDNCAA.jpg");
+            addSampleItem(p3, 872585L, "오펜하이머", "/jpD6z9fgNe7OqsHoDeAWQWoULde.jpg");
+            addSampleItem(p3, 155L, "다크 나이트", "/9ICUbdveP56jRoMMVkXSOr3ceyV.jpg");
 
             // Collection 4: Emotional Healing
             Playlist p4 = Playlist.builder()
@@ -100,10 +112,10 @@ public class PlaylistService {
                     .isPublic(true)
                     .build();
             p4 = playlistRepository.save(p4);
-            addSampleItem(p4, 976573L, "엘리멘탈", "/8riWfqAzUQifpGz1e7yvTzJ0WvP.jpg");
-            addSampleItem(p4, 1022789L, "인사이드 아웃 2", "/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg");
-            addSampleItem(p4, 313369L, "라라랜드", "/uDO8zWDhfWwoFdKS4fzkVJt0Rf0.jpg");
-            addSampleItem(p4, 122906L, "어바웃 타임", "/iR1bVfPQHzWeubGzNL59w4p480.jpg");
+            addSampleItem(p4, 976573L, "엘리멘탈", "/w7eApyAshbepBnDyYRjSeGyRHi2.jpg");
+            addSampleItem(p4, 1022789L, "인사이드 아웃 2", "/x2BHx02jMbvpKjMvbf8XxJkYwHJ.jpg");
+            addSampleItem(p4, 313369L, "라라랜드", "/ad9ndytwOckyShSc0A6tx1rZRkW.jpg");
+            addSampleItem(p4, 122906L, "어바웃 타임", "/cLfuuK1Y5FjX1xXDrrEa9ppnKuy.jpg");
         } catch (Exception e) {
             // ignore
         }

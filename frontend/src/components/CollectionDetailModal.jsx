@@ -147,6 +147,10 @@ export default function CollectionDetailModal({ collection, onClose, onSelectMov
                       src={thumbUrl}
                       alt={movie.movieTitle || movie.title}
                       loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop';
+                      }}
                       style={{
                         position: 'absolute',
                         top: 0,

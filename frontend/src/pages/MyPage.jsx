@@ -937,6 +937,10 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                                   src={thumbUrl}
                                   alt={item.movieTitle || '영화 포스터'}
                                   loading="lazy"
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop';
+                                  }}
                                   style={{
                                     width: '100%',
                                     height: '100%',
