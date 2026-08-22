@@ -51,14 +51,16 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
       fetchMovieImages(id);
       fetchReviews(id);
       fetchRatingSummary(id);
-      if (userIdentifier) {
-        fetch(apiUrl(`/api/wishlists/check?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${id}`))
+      if (user && user.nickname) {
+        fetch(apiUrl(`/api/wishlists/check?userIdentifier=${encodeURIComponent(user.nickname)}&movieId=${id}`))
           .then((res) => res.json())
           .then((data) => setIsWishlisted(!!data))
           .catch(() => {});
+      } else {
+        setIsWishlisted(false);
       }
     }
-  }, [id, userIdentifier]);
+  }, [id, user]);
 
   // Lightbox keyboard navigation
   useEffect(() => {
@@ -214,12 +216,24 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   };
 
   const handleOpenPlaylistPicker = () => {
+    if (!user) {
+      if (window.confirm('내 영화 리스트에 담기 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login');
+      }
+      return;
+    }
     fetchUserPlaylists();
     setShowPlaylistPicker(!showPlaylistPicker);
   };
 
   const handleAddToPlaylist = async (playlistId) => {
     if (!movie) return;
+    if (!user) {
+      if (window.confirm('내 영화 리스트에 담기 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login');
+      }
+      return;
+    }
     setAddingToPlaylist(true);
     try {
       const rawPoster = movie.poster_path || movie.posterPath || '';
@@ -249,19 +263,25 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
 
   const handleToggleWishlist = async () => {
     if (!movie || !movie.id) return;
+    if (!user) {
+      if (window.confirm('위시리스트 찜 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login');
+      }
+      return;
+    }
     const nextState = !isWishlisted;
     setIsWishlisted(nextState);
 
     try {
       if (!nextState) {
-        await fetch(apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}&movieId=${movie.id}`), { method: 'DELETE' });
+        await fetch(apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(user.nickname)}&movieId=${movie.id}`), { method: 'DELETE' });
       } else {
         const cleanTitle = (movie.title || '').replace(/^([🥇🥈🥉]|\d+위|\s|\.)+/g, '').trim();
         await fetch(apiUrl('/api/wishlists'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userIdentifier,
+            userIdentifier: user.nickname,
             tmdbMovieId: movie.id,
             movieTitle: cleanTitle,
             posterPath: movie.poster_path || movie.posterPath || ''
@@ -275,11 +295,13 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   };
 
   const handleRatingChange = async (newRating) => {
-    setRating(newRating);
     if (!user) {
-      alert('별점 평가를 저장하려면 로그인이 필요합니다.');
+      if (window.confirm('별점 평가는 로그인 후 저장하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login');
+      }
       return;
     }
+    setRating(newRating);
     if (!movie || !movie.id) return;
 
     try {
@@ -309,7 +331,9 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!user) {
-      alert('로그인이 필요한 기능입니다.');
+      if (window.confirm('리뷰 작성은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login');
+      }
       return;
     }
     if (!rating || rating <= 0) {

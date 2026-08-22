@@ -53,12 +53,7 @@ function AppContent() {
     if (user && user.nickname) {
       return user.nickname;
     }
-    let guestId = localStorage.getItem("guest_identifier");
-    if (!guestId) {
-      guestId = "guest_" + Math.random().toString(36).substring(2, 9);
-      localStorage.setItem("guest_identifier", guestId);
-    }
-    return guestId;
+    return null;
   };
 
   const fetchPopularMovies = async () => {
@@ -77,8 +72,12 @@ function AppContent() {
   };
 
   const fetchWishlist = async () => {
+    if (!user || !user.nickname) {
+      setWishlists([]);
+      return;
+    }
     try {
-      const userIdentifier = getUserIdentifier();
+      const userIdentifier = user.nickname;
       const res = await fetch(
         apiUrl(`/api/wishlists?userIdentifier=${encodeURIComponent(userIdentifier)}`),
       );
@@ -94,7 +93,13 @@ function AppContent() {
 
   const handleToggleWishlist = async (movie) => {
     if (!movie || !movie.id) return;
-    const userIdentifier = getUserIdentifier();
+    if (!user) {
+      if (window.confirm("위시리스트 찜 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?")) {
+        navigate("/login");
+      }
+      return;
+    }
+    const userIdentifier = user.nickname;
     const movieIdNum = Number(movie.id);
     const isWishlisted = safeWishlists.some((w) => Number(w.tmdbMovieId) === movieIdNum);
 
@@ -244,7 +249,15 @@ function AppContent() {
         onSearchSubmit={handleSearchSubmit}
         wishlistCount={safeWishlists.length}
         onOpenWishlist={() => setIsWishlistOpen(true)}
-        onOpenPlaylist={() => setIsPlaylistOpen(true)}
+        onOpenPlaylist={() => {
+          if (!user) {
+            if (window.confirm("영화 리스트 기능은 로그인 후 이용하실 수 있습니다.\n로그인 페이지로 이동하시겠습니까?")) {
+              navigate("/login");
+            }
+            return;
+          }
+          setIsPlaylistOpen(true);
+        }}
         user={user}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={handleLogout}
