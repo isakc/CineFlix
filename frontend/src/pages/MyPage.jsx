@@ -1301,9 +1301,19 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                         background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 35%, rgba(0,0,0,0.85) 100%)'
                       }}
                     />
-                    {/* Top Scallop Die-Cut Holes */}
-                    <div style={{ position: 'absolute', top: '50px', left: '-10px', width: '20px', height: '20px', borderRadius: '50%', background: '#191923', zIndex: 5 }} />
-                    <div style={{ position: 'absolute', top: '50px', right: '-10px', width: '20px', height: '20px', borderRadius: '50%', background: '#191923', zIndex: 5 }} />
+                    {/* ✂️ Top Die-Cut Stamp Holes */}
+                    <div style={{ position: 'absolute', top: '-8px', left: 0, right: 0, display: 'flex', justifyContent: 'space-between', padding: '0 6px', zIndex: 10 }}>
+                      {[...Array(10)].map((_, i) => (
+                        <div key={i} style={{ width: '13px', height: '13px', borderRadius: '50%', background: '#191923' }} />
+                      ))}
+                    </div>
+
+                    {/* ✂️ Bottom Die-Cut Stamp Holes */}
+                    <div style={{ position: 'absolute', bottom: '-8px', left: 0, right: 0, display: 'flex', justifyContent: 'space-between', padding: '0 6px', zIndex: 10 }}>
+                      {[...Array(10)].map((_, i) => (
+                        <div key={i} style={{ width: '13px', height: '13px', borderRadius: '50%', background: '#191923' }} />
+                      ))}
+                    </div>
 
                     {/* Top Header */}
                     <div style={{ position: 'absolute', top: '12px', left: '14px', right: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(255,255,255,0.3)', paddingBottom: '8px' }}>

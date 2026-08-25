@@ -355,57 +355,57 @@ export default function PhotoTicketModal({
                     background: 'linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.92) 100%)'
                   }} />
 
-                  {/* ✂️ DIE-CUT NOTCH 1: Top-Left Scallop Punch Hole */}
+                  {/* ✂️ DIE-CUT TOP STAMP ROW (위쪽 도무송 펀칭 타공) */}
                   <div style={{
                     position: 'absolute',
-                    top: '72px',
-                    left: '-14px',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 15, 22, 1)',
-                    boxShadow: 'inset -2px 0 5px rgba(0,0,0,0.8)',
-                    zIndex: 6
-                  }} />
+                    top: '-9px',
+                    left: '0',
+                    right: '0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0 6px',
+                    zIndex: 10,
+                    pointerEvents: 'none'
+                  }}>
+                    {[...Array(12)].map((_, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: '15px',
+                          height: '15px',
+                          borderRadius: '50%',
+                          background: 'rgba(14, 15, 22, 1)',
+                          boxShadow: 'inset 0 -2px 3px rgba(0,0,0,0.8)'
+                        }}
+                      />
+                    ))}
+                  </div>
 
-                  {/* ✂️ DIE-CUT NOTCH 2: Top-Right Scallop Punch Hole */}
+                  {/* ✂️ DIE-CUT BOTTOM STAMP ROW (아래쪽 도무송 펀칭 타공) */}
                   <div style={{
                     position: 'absolute',
-                    top: '72px',
-                    right: '-14px',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 15, 22, 1)',
-                    boxShadow: 'inset 2px 0 5px rgba(0,0,0,0.8)',
-                    zIndex: 6
-                  }} />
-
-                  {/* ✂️ DIE-CUT NOTCH 3: Bottom-Left Scallop Punch Hole */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '42px',
-                    left: '-14px',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 15, 22, 1)',
-                    boxShadow: 'inset -2px 0 5px rgba(0,0,0,0.8)',
-                    zIndex: 6
-                  }} />
-
-                  {/* ✂️ DIE-CUT NOTCH 4: Bottom-Right Scallop Punch Hole */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '42px',
-                    right: '-14px',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 15, 22, 1)',
-                    boxShadow: 'inset 2px 0 5px rgba(0,0,0,0.8)',
-                    zIndex: 6
-                  }} />
+                    bottom: '-9px',
+                    left: '0',
+                    right: '0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0 6px',
+                    zIndex: 10,
+                    pointerEvents: 'none'
+                  }}>
+                    {[...Array(12)].map((_, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: '15px',
+                          height: '15px',
+                          borderRadius: '50%',
+                          background: 'rgba(14, 15, 22, 1)',
+                          boxShadow: 'inset 0 2px 3px rgba(0,0,0,0.8)'
+                        }}
+                      />
+                    ))}
+                  </div>
 
                   {/* Top Perforated Stub Header */}
                   <div style={{
@@ -531,53 +531,57 @@ export default function PhotoTicketModal({
                     boxSizing: 'border-box'
                   }}
                 >
-                  {/* ✂️ DIE-CUT NOTCH 1: Top-Left Scallop Punch Hole */}
+                  {/* ✂️ DIE-CUT TOP STAMP ROW (위쪽 도무송 펀칭 타공) */}
                   <div style={{
                     position: 'absolute',
-                    top: '72px',
-                    left: '-14px',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 15, 22, 1)',
-                    zIndex: 6
-                  }} />
+                    top: '-9px',
+                    left: '0',
+                    right: '0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0 6px',
+                    zIndex: 10,
+                    pointerEvents: 'none'
+                  }}>
+                    {[...Array(12)].map((_, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: '15px',
+                          height: '15px',
+                          borderRadius: '50%',
+                          background: 'rgba(14, 15, 22, 1)',
+                          boxShadow: 'inset 0 -2px 3px rgba(0,0,0,0.8)'
+                        }}
+                      />
+                    ))}
+                  </div>
 
-                  {/* ✂️ DIE-CUT NOTCH 2: Top-Right Scallop Punch Hole */}
+                  {/* ✂️ DIE-CUT BOTTOM STAMP ROW (아래쪽 도무송 펀칭 타공) */}
                   <div style={{
                     position: 'absolute',
-                    top: '72px',
-                    right: '-14px',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 15, 22, 1)',
-                    zIndex: 6
-                  }} />
-
-                  {/* ✂️ DIE-CUT NOTCH 3: Bottom-Left Scallop Punch Hole */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '42px',
-                    left: '-14px',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 15, 22, 1)',
-                    zIndex: 6
-                  }} />
-
-                  {/* ✂️ DIE-CUT NOTCH 4: Bottom-Right Scallop Punch Hole */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '42px',
-                    right: '-14px',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 15, 22, 1)',
-                    zIndex: 6
-                  }} />
+                    bottom: '-9px',
+                    left: '0',
+                    right: '0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0 6px',
+                    zIndex: 10,
+                    pointerEvents: 'none'
+                  }}>
+                    {[...Array(12)].map((_, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: '15px',
+                          height: '15px',
+                          borderRadius: '50%',
+                          background: 'rgba(14, 15, 22, 1)',
+                          boxShadow: 'inset 0 2px 3px rgba(0,0,0,0.8)'
+                        }}
+                      />
+                    ))}
+                  </div>
 
                   {/* Top Perforated Stub Header */}
                   <div style={{
