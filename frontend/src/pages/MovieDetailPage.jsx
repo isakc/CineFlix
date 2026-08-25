@@ -1640,6 +1640,8 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
           user={user}
           userRating={rating}
           userReview={content}
+          stills={galleryPhotos}
+          castList={castList}
           onClose={() => setShowPhotoTicketModal(false)}
         />
       )}

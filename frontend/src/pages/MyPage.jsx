@@ -1282,8 +1282,12 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                     }}
                   >
                     <img
-                      src={t.photoUrl}
+                      src={t.photoUrl || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop'}
                       alt={t.movieTitle}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop';
+                      }}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -1294,16 +1298,20 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                       style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 40%, rgba(0,0,0,0.85) 100%)'
+                        background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 35%, rgba(0,0,0,0.85) 100%)'
                       }}
                     />
+                    {/* Top Scallop Die-Cut Holes */}
+                    <div style={{ position: 'absolute', top: '50px', left: '-10px', width: '20px', height: '20px', borderRadius: '50%', background: '#191923', zIndex: 5 }} />
+                    <div style={{ position: 'absolute', top: '50px', right: '-10px', width: '20px', height: '20px', borderRadius: '50%', background: '#191923', zIndex: 5 }} />
+
                     {/* Top Header */}
-                    <div style={{ position: 'absolute', top: '12px', left: '14px', right: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '900', color: '#FFF', letterSpacing: '1px' }}>
-                        🎬 CINEFLIX
+                    <div style={{ position: 'absolute', top: '12px', left: '14px', right: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(255,255,255,0.3)', paddingBottom: '8px' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: '900', color: '#FFF', letterSpacing: '1px' }}>
+                        ● ORIGINAL TICKET ●
                       </span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', background: 'rgba(0,0,0,0.6)', padding: '2px 8px', borderRadius: '6px', fontWeight: '800' }}>
-                        ★ {Number(t.rating).toFixed(1)}
+                        {t.ticketNo || `★ ${Number(t.rating).toFixed(1)}`}
                       </span>
                     </div>
 

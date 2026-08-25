@@ -1,33 +1,76 @@
 import React, { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 
-export default function PhotoTicketModal({ movie, user, userRating = 5.0, userReview = '', onClose, onSaveTicket }) {
+const DEFAULT_POSTER_FALLBACK = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop';
+
+const resolveImageUrl = (path) => {
+  if (!path || typeof path !== 'string' || path.length < 3) {
+    return DEFAULT_POSTER_FALLBACK;
+  }
+  if (path.startsWith('data:') || path.startsWith('blob:') || path.startsWith('http')) {
+    return path;
+  }
+  return `https://image.tmdb.org/t/p/w780${path.startsWith('/') ? path : '/' + path}`;
+};
+
+export default function PhotoTicketModal({
+  movie,
+  user,
+  userRating = 5.0,
+  userReview = '',
+  stills = [],
+  castList = [],
+  onClose,
+  onSaveTicket
+}) {
   if (!movie) return null;
 
-  // Formatting initial values
+  // Format initial values
   const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+  const ticketNumber = String(movie.id ? Math.abs(Number(movie.id)) % 1000 : 42).padStart(3, '0');
+
+  // Extract all available photos from movie, posters, and stills
   const rawPoster = movie.poster_path || movie.posterPath || '';
   const rawBackdrop = movie.backdrop_path || movie.backdropPath || '';
+  
+  const posterUrl = resolveImageUrl(rawPoster);
+  const backdropUrl = resolveImageUrl(rawBackdrop);
 
-  const defaultPosterUrl = (rawPoster && rawPoster.length > 3)
-    ? (rawPoster.startsWith('http') ? rawPoster : `https://image.tmdb.org/t/p/w780${rawPoster.startsWith('/') ? rawPoster : '/' + rawPoster}`)
-    : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop';
+  // Build photo candidate list
+  const photoCandidates = [];
+  if (posterUrl && posterUrl !== DEFAULT_POSTER_FALLBACK) {
+    photoCandidates.push({ label: '메인 포스터', url: posterUrl });
+  }
+  if (backdropUrl && backdropUrl !== DEFAULT_POSTER_FALLBACK && backdropUrl !== posterUrl) {
+    photoCandidates.push({ label: '와이드 스틸컷', url: backdropUrl });
+  }
 
-  const defaultBackdropUrl = (rawBackdrop && rawBackdrop.length > 3)
-    ? (rawBackdrop.startsWith('http') ? rawBackdrop : `https://image.tmdb.org/t/p/w1280${rawBackdrop.startsWith('/') ? rawBackdrop : '/' + rawBackdrop}`)
-    : defaultPosterUrl;
+  // Add still cuts from gallery if available
+  if (Array.isArray(stills)) {
+    stills.forEach((s, idx) => {
+      const sUrl = resolveImageUrl(s.file_path || s.filePath || s);
+      if (sUrl && !photoCandidates.some((p) => p.url === sUrl) && photoCandidates.length < 8) {
+        photoCandidates.push({ label: `스틸컷 #${photoCandidates.length + 1}`, url: sUrl });
+      }
+    });
+  }
+
+  if (photoCandidates.length === 0) {
+    photoCandidates.push({ label: '기본 포스터', url: DEFAULT_POSTER_FALLBACK });
+  }
 
   // States
   const [isFlipped, setIsFlipped] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState(defaultPosterUrl);
+  const [selectedPhoto, setSelectedPhoto] = useState(photoCandidates[0].url);
   const [customPhotoUrl, setCustomPhotoUrl] = useState(null);
+  const [ticketNo, setTicketNo] = useState(`NO. ${ticketNumber}`);
   const [viewDate, setViewDate] = useState(todayStr);
   const [viewTime, setViewTime] = useState('19:30');
-  const [theater, setTheater] = useState('CineFlix 1관 (IMAX LASER)');
+  const [theater, setTheater] = useState('CineFlix 특별관 (DOLBY CINEMA)');
   const [seat, setSeat] = useState('H열 14번 (VIP)');
   const [rating, setRating] = useState(userRating > 0 ? userRating : 5.0);
-  const [quote, setQuote] = useState(userReview || '극장에서 느낀 압도적인 감동과 여운!');
-  const [theme, setTheme] = useState('gold'); // 'gold' | 'neon' | 'classic' | 'vintage'
+  const [quote, setQuote] = useState(userReview || '극장에서 느낀 압도적인 전율과 감동!');
+  const [theme, setTheme] = useState('gold'); // 'gold' | 'silver' | 'neon' | 'noir'
   const [downloading, setDownloading] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -35,11 +78,12 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
   const backTicketRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Available Photos Carousel
-  const photoOptions = [
-    { label: '공식 포스터', url: defaultPosterUrl },
-    ...(defaultBackdropUrl !== defaultPosterUrl ? [{ label: '와이드 스틸컷', url: defaultBackdropUrl }] : [])
-  ];
+  // Sync photo selection if candidate list updates
+  useEffect(() => {
+    if (photoCandidates[0] && !customPhotoUrl) {
+      setSelectedPhoto(photoCandidates[0].url);
+    }
+  }, [movie]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -63,7 +107,7 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
       if (!targetRef) return;
 
       const canvas = await html2canvas(targetRef, {
-        scale: 3, // High-res 3x DPI for crystal-clear image export
+        scale: 3, // 3x High-DPI crystal-clear export
         useCORS: true,
         allowTaint: true,
         backgroundColor: null
@@ -71,8 +115,8 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
 
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      const sideName = (!isFlipped && side === 'current') ? '앞면' : '뒷면';
-      link.download = `CineFlix_포토티켓_${(movie.title || 'Movie').replace(/\s+/g, '_')}_${sideName}.png`;
+      const sideName = (!isFlipped && side === 'current') ? '오리지널_아트(앞면)' : '티켓_인포(뒷면)';
+      link.download = `CineFlix_오리지널티켓_${(movie.title || 'Movie').replace(/\s+/g, '_')}_${sideName}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -91,6 +135,7 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
         movieId: movie.id,
         movieTitle: movie.title,
         photoUrl: selectedPhoto,
+        ticketNo,
         viewDate,
         viewTime,
         theater,
@@ -117,39 +162,44 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
     }
   };
 
-  // Theme Styles Dictionary
+  // Megabox Original Ticket Theme Presets
   const themeStyles = {
     gold: {
-      border: 'linear-gradient(135deg, #FFDF00, #D4AF37, #AA771C)',
-      accent: 'var(--accent-gold, #FFC107)',
-      stampColor: '#FFB800',
-      badgeBg: 'rgba(255, 193, 7, 0.18)',
-      textGradient: 'linear-gradient(135deg, #FFF, #FFE082)'
+      accent: '#FFD700',
+      badgeBg: 'rgba(255, 215, 0, 0.15)',
+      borderColor: '#D4AF37',
+      foilGradient: 'linear-gradient(135deg, #FFE066, #FFB800, #AA771C)',
+      titleGlow: '0 0 12px rgba(255, 215, 0, 0.6)'
+    },
+    silver: {
+      accent: '#E0E6ED',
+      badgeBg: 'rgba(224, 230, 237, 0.15)',
+      borderColor: '#A0AEC0',
+      foilGradient: 'linear-gradient(135deg, #FFFFFF, #CBD5E1, #64748B)',
+      titleGlow: '0 0 12px rgba(255, 255, 255, 0.5)'
     },
     neon: {
-      border: 'linear-gradient(135deg, #FF007F, #7928CA, #00DFD8)',
-      accent: '#00DFD8',
-      stampColor: '#FF007F',
-      badgeBg: 'rgba(0, 223, 216, 0.18)',
-      textGradient: 'linear-gradient(135deg, #FFF, #80E9FF)'
+      accent: '#00F5D4',
+      badgeBg: 'rgba(0, 245, 212, 0.15)',
+      borderColor: '#7B2CBF',
+      foilGradient: 'linear-gradient(135deg, #00F5D4, #7B2CBF, #F72585)',
+      titleGlow: '0 0 12px rgba(0, 245, 212, 0.6)'
     },
-    classic: {
-      border: 'linear-gradient(135deg, #E50914, #9E000B, #500000)',
+    noir: {
       accent: '#E50914',
-      stampColor: '#E50914',
-      badgeBg: 'rgba(229, 9, 20, 0.18)',
-      textGradient: 'linear-gradient(135deg, #FFF, #FFA8A8)'
-    },
-    vintage: {
-      border: 'linear-gradient(135deg, #D7CCC8, #8D6E63, #4E342E)',
-      accent: '#D7CCC8',
-      stampColor: '#BCAAA4',
-      badgeBg: 'rgba(215, 204, 200, 0.18)',
-      textGradient: 'linear-gradient(135deg, #FFF, #D7CCC8)'
+      badgeBg: 'rgba(229, 9, 20, 0.15)',
+      borderColor: '#9E000B',
+      foilGradient: 'linear-gradient(135deg, #FF4D4D, #E50914, #7A0006)',
+      titleGlow: '0 0 12px rgba(229, 9, 20, 0.6)'
     }
   };
 
   const currentTheme = themeStyles[theme] || themeStyles.gold;
+
+  // Main Actors snippet
+  const castSnippet = Array.isArray(castList) && castList.length > 0
+    ? castList.slice(0, 3).map((c) => c.name).join(', ')
+    : '';
 
   return (
     <div
@@ -158,7 +208,7 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.88)',
+        background: 'rgba(0, 0, 0, 0.9)',
         backdropFilter: 'blur(12px)',
         display: 'flex',
         alignItems: 'center',
@@ -173,13 +223,13 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '920px',
-          maxHeight: '92vh',
+          maxWidth: '960px',
+          maxHeight: '94vh',
           borderRadius: '28px',
-          padding: '32px',
-          background: 'rgba(16, 16, 24, 0.98)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.8)',
+          padding: '30px 34px',
+          background: 'rgba(14, 15, 22, 0.98)',
+          border: '1px solid rgba(255, 215, 0, 0.25)',
+          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.85)',
           display: 'flex',
           flexDirection: 'column',
           gap: '24px',
@@ -189,13 +239,25 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
         {/* Modal Top Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '1.8rem' }}>🎫</span>
+            <span style={{ fontSize: '1.8rem' }}>🎟️</span>
             <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#FFF', margin: 0 }}>
-                나만의 시네마 포토티켓 제작
-              </h2>
-              <span style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
-                소장하고 싶은 영화의 포토와 관람 기록을 디지털 굿즈 티켓으로 만들어보세요!
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h2 style={{ fontSize: '1.45rem', fontWeight: '900', color: '#FFF', margin: 0 }}>
+                  오리지널 티켓 (Original Ticket) 제작기
+                </h2>
+                <span style={{
+                  background: 'linear-gradient(135deg, #FFB800, #FF8C00)',
+                  color: '#000',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.72rem',
+                  fontWeight: '900'
+                }}>
+                  도무송 시그니처 컷
+                </span>
+              </div>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                메가박스 시그니처 굿즈 스타일의 도무송 타공과 금박 인포메이션이 담긴 오리지널 티켓입니다.
               </span>
             </div>
           </div>
@@ -221,21 +283,21 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
           </button>
         </div>
 
-        {/* Modal Main Grid: Left Ticket 3D Preview | Right Customizer Controls */}
+        {/* Modal Main Grid: Left Die-Cut Ticket 3D Preview | Right Customizer Controls */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(320px, 360px) 1fr',
-          gap: '32px',
+          gridTemplateColumns: 'minmax(300px, 330px) 1fr',
+          gap: '36px',
           alignItems: 'start'
         }}>
-          {/* ================= LEFT: 3D Ticket Interactive Card ================= */}
+          {/* ================= LEFT: Megabox Original Ticket Die-Cut 3D Card ================= */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-            {/* Card Flip Wrapper */}
+            {/* 3D Flip Card Container */}
             <div
               style={{
                 perspective: '1200px',
-                width: '320px',
-                height: '520px',
+                width: '300px',
+                height: '560px',
                 cursor: 'pointer'
               }}
               onClick={() => setIsFlipped(!isFlipped)}
@@ -250,35 +312,39 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
                   transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
                 }}
               >
-                {/* ---------------- FRONT FACE (Photo Art) ---------------- */}
+                {/* ---------------- FRONT FACE (Original Ticket Art with Die-Cut Notches) ---------------- */}
                 <div
                   ref={frontTicketRef}
                   style={{
                     position: 'absolute',
                     inset: 0,
                     backfaceVisibility: 'hidden',
-                    borderRadius: '22px',
+                    borderRadius: '18px',
                     overflow: 'hidden',
                     background: '#0B0C10',
-                    border: '2px solid rgba(255, 255, 255, 0.15)',
-                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
+                    border: '1.5px solid rgba(255, 255, 255, 0.16)',
+                    boxShadow: '0 24px 50px rgba(0, 0, 0, 0.7)',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    boxSizing: 'border-box'
                   }}
                 >
-                  {/* Background Image with Gradient Overlay */}
+                  {/* Photo Art Background Image */}
                   <img
                     src={selectedPhoto}
-                    alt="Ticket Poster"
-                    crossOrigin="anonymous"
+                    alt={movie.title || 'Ticket Art'}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = DEFAULT_POSTER_FALLBACK;
+                    }}
                     style={{
                       position: 'absolute',
                       inset: 0,
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      filter: theme === 'vintage' ? 'sepia(0.3) contrast(1.1)' : (theme === 'neon' ? 'saturate(1.3) contrast(1.1)' : 'none')
+                      filter: theme === 'noir' ? 'contrast(1.15) saturate(1.1)' : (theme === 'silver' ? 'contrast(1.1)' : 'none')
                     }}
                   />
 
@@ -286,106 +352,167 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
                   <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.4) 65%, rgba(0,0,0,0.95) 100%)'
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.92) 100%)'
                   }} />
 
-                  {/* Top Notch Hole Cutouts (Ticket Styling) */}
+                  {/* ✂️ DIE-CUT NOTCH 1: Top-Left Scallop Punch Hole */}
                   <div style={{
                     position: 'absolute',
-                    top: '55px',
-                    left: '-12px',
-                    width: '24px',
-                    height: '24px',
+                    top: '72px',
+                    left: '-14px',
+                    width: '28px',
+                    height: '28px',
                     borderRadius: '50%',
-                    background: 'rgba(16, 16, 24, 1)',
-                    boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.6)',
-                    zIndex: 5
-                  }} />
-                  <div style={{
-                    position: 'absolute',
-                    top: '55px',
-                    right: '-12px',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: 'rgba(16, 16, 24, 1)',
-                    boxShadow: 'inset 2px 0 4px rgba(0,0,0,0.6)',
-                    zIndex: 5
+                    background: 'rgba(14, 15, 22, 1)',
+                    boxShadow: 'inset -2px 0 5px rgba(0,0,0,0.8)',
+                    zIndex: 6
                   }} />
 
-                  {/* Top Ticket Header */}
+                  {/* ✂️ DIE-CUT NOTCH 2: Top-Right Scallop Punch Hole */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '72px',
+                    right: '-14px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'rgba(14, 15, 22, 1)',
+                    boxShadow: 'inset 2px 0 5px rgba(0,0,0,0.8)',
+                    zIndex: 6
+                  }} />
+
+                  {/* ✂️ DIE-CUT NOTCH 3: Bottom-Left Scallop Punch Hole */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '42px',
+                    left: '-14px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'rgba(14, 15, 22, 1)',
+                    boxShadow: 'inset -2px 0 5px rgba(0,0,0,0.8)',
+                    zIndex: 6
+                  }} />
+
+                  {/* ✂️ DIE-CUT NOTCH 4: Bottom-Right Scallop Punch Hole */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '42px',
+                    right: '-14px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'rgba(14, 15, 22, 1)',
+                    boxShadow: 'inset 2px 0 5px rgba(0,0,0,0.8)',
+                    zIndex: 6
+                  }} />
+
+                  {/* Top Perforated Stub Header */}
                   <div style={{
                     position: 'relative',
-                    zIndex: 3,
-                    padding: '16px 20px',
+                    zIndex: 4,
+                    height: '72px',
+                    padding: '0 20px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    borderBottom: '1px dashed rgba(255, 255, 255, 0.25)'
+                    borderBottom: '2px dashed rgba(255, 255, 255, 0.4)',
+                    boxSizing: 'border-box'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '1rem' }}>🎬</span>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '900', color: '#FFF', letterSpacing: '2px' }}>
-                        CINEFLIX
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '0.62rem', fontWeight: '900', letterSpacing: '2px', color: '#BBB' }}>
+                        ● CINEFLIX ●
+                      </span>
+                      <span style={{ fontSize: '0.78rem', fontWeight: '900', color: currentTheme.accent, letterSpacing: '1px' }}>
+                        ORIGINAL TICKET
                       </span>
                     </div>
-                    <span style={{
-                      fontSize: '0.7rem',
-                      fontWeight: '800',
+
+                    <div style={{
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      border: `1px solid ${currentTheme.borderColor}`,
+                      padding: '3px 9px',
+                      borderRadius: '8px',
+                      fontSize: '0.76rem',
+                      fontWeight: '900',
                       color: currentTheme.accent,
-                      background: 'rgba(0,0,0,0.6)',
-                      padding: '2px 8px',
-                      borderRadius: '6px',
-                      border: '1px solid rgba(255,255,255,0.1)'
+                      letterSpacing: '1px'
                     }}>
-                      PHOTO TICKET
-                    </span>
+                      {ticketNo}
+                    </div>
                   </div>
 
-                  {/* Bottom Movie Title & Gold Seal */}
+                  {/* Bottom Movie Title & Details Plate */}
                   <div style={{
                     position: 'relative',
-                    zIndex: 3,
-                    padding: '20px',
+                    zIndex: 4,
+                    padding: '20px 18px 52px 18px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '6px'
+                    gap: '6px',
+                    boxSizing: 'border-box'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: currentTheme.accent, fontSize: '0.9rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ color: currentTheme.accent, fontSize: '0.92rem' }}>
                         {'★'.repeat(Math.round(rating))}
                       </span>
-                      <span style={{ fontSize: '0.78rem', color: '#DDD', fontWeight: '700' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#EEE', fontWeight: '800' }}>
                         {Number(rating).toFixed(1)} / 5.0
                       </span>
                     </div>
 
                     <h3 style={{
-                      fontSize: '1.45rem',
+                      fontSize: '1.35rem',
                       fontWeight: '900',
                       color: '#FFF',
                       margin: 0,
-                      lineHeight: '1.2',
-                      textShadow: '0 2px 8px rgba(0,0,0,0.8)'
+                      lineHeight: '1.25',
+                      textShadow: '0 2px 10px rgba(0,0,0,0.9)'
                     }}>
                       {movie.title}
                     </h3>
+
+                    {castSnippet && (
+                      <div style={{ fontSize: '0.74rem', color: '#DDD', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                        출연: {castSnippet}
+                      </div>
+                    )}
 
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      fontSize: '0.76rem',
-                      color: '#BBB',
-                      marginTop: '4px'
+                      fontSize: '0.72rem',
+                      color: '#AAA',
+                      marginTop: '4px',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+                      paddingTop: '6px'
                     }}>
-                      <span>{viewDate} • {theater.split(' ')[0]}</span>
-                      <span style={{ color: currentTheme.accent, fontWeight: '800' }}>ADMIT ONE</span>
+                      <span>{viewDate}</span>
+                      <span style={{ color: currentTheme.accent, fontWeight: '800' }}>SPECIAL EDITION</span>
                     </div>
+                  </div>
+
+                  {/* Bottom Die-Cut Stub Footer */}
+                  <div style={{
+                    position: 'relative',
+                    zIndex: 4,
+                    height: '42px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderTop: '2px dashed rgba(255, 255, 255, 0.4)',
+                    background: 'rgba(0, 0, 0, 0.65)',
+                    fontSize: '0.68rem',
+                    fontWeight: '900',
+                    color: '#FFF',
+                    letterSpacing: '3px'
+                  }}>
+                    ★ ADMIT ONE ★
                   </div>
                 </div>
 
-                {/* ---------------- BACK FACE (Classic Ticket Admission Pass) ---------------- */}
+                {/* ---------------- BACK FACE (Megabox Original Ticket Info Pass) ---------------- */}
                 <div
                   ref={backTicketRef}
                   style={{
@@ -393,145 +520,192 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
                     inset: 0,
                     backfaceVisibility: 'hidden',
                     transform: 'rotateY(180deg)',
-                    borderRadius: '22px',
+                    borderRadius: '18px',
                     overflow: 'hidden',
-                    background: 'linear-gradient(145deg, #14151F 0%, #0A0A10 100%)',
-                    border: '2px solid rgba(255, 255, 255, 0.15)',
-                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
-                    padding: '24px 22px',
+                    background: 'linear-gradient(150deg, #161724 0%, #0A0A10 100%)',
+                    border: '1.5px solid rgba(255, 255, 255, 0.16)',
+                    boxShadow: '0 24px 50px rgba(0, 0, 0, 0.7)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     boxSizing: 'border-box'
                   }}
                 >
-                  {/* Top Notch Cutouts */}
+                  {/* ✂️ DIE-CUT NOTCH 1: Top-Left Scallop Punch Hole */}
                   <div style={{
                     position: 'absolute',
-                    top: '55px',
-                    left: '-12px',
-                    width: '24px',
-                    height: '24px',
+                    top: '72px',
+                    left: '-14px',
+                    width: '28px',
+                    height: '28px',
                     borderRadius: '50%',
-                    background: 'rgba(16, 16, 24, 1)',
-                    zIndex: 5
-                  }} />
-                  <div style={{
-                    position: 'absolute',
-                    top: '55px',
-                    right: '-12px',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: 'rgba(16, 16, 24, 1)',
-                    zIndex: 5
+                    background: 'rgba(14, 15, 22, 1)',
+                    zIndex: 6
                   }} />
 
-                  {/* Header Title */}
-                  <div>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      borderBottom: '1px dashed rgba(255, 255, 255, 0.25)',
-                      paddingBottom: '14px',
-                      marginBottom: '16px'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '1rem' }}>🎟️</span>
-                        <span style={{ fontSize: '0.85rem', fontWeight: '900', color: currentTheme.accent, letterSpacing: '1px' }}>
-                          CINEFLIX PASS
-                        </span>
-                      </div>
-                      <span style={{ fontSize: '0.72rem', color: '#888', fontWeight: '700' }}>
-                        NO. {Math.floor(100000 + Math.random() * 900000)}
+                  {/* ✂️ DIE-CUT NOTCH 2: Top-Right Scallop Punch Hole */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '72px',
+                    right: '-14px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'rgba(14, 15, 22, 1)',
+                    zIndex: 6
+                  }} />
+
+                  {/* ✂️ DIE-CUT NOTCH 3: Bottom-Left Scallop Punch Hole */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '42px',
+                    left: '-14px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'rgba(14, 15, 22, 1)',
+                    zIndex: 6
+                  }} />
+
+                  {/* ✂️ DIE-CUT NOTCH 4: Bottom-Right Scallop Punch Hole */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '42px',
+                    right: '-14px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'rgba(14, 15, 22, 1)',
+                    zIndex: 6
+                  }} />
+
+                  {/* Top Perforated Stub Header */}
+                  <div style={{
+                    height: '72px',
+                    padding: '0 20px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: '2px dashed rgba(255, 255, 255, 0.4)',
+                    boxSizing: 'border-box'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '1rem' }}>🎟️</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: '900', color: currentTheme.accent, letterSpacing: '1px' }}>
+                        ORIGINAL PASS
                       </span>
                     </div>
 
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: `1px solid ${currentTheme.borderColor}`,
+                      padding: '3px 9px',
+                      borderRadius: '8px',
+                      fontSize: '0.74rem',
+                      fontWeight: '900',
+                      color: currentTheme.accent
+                    }}>
+                      {ticketNo}
+                    </div>
+                  </div>
+
+                  {/* Middle Ticket Specs & Review Information */}
+                  <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
                     <h3 style={{
-                      fontSize: '1.25rem',
+                      fontSize: '1.2rem',
                       fontWeight: '900',
                       color: '#FFF',
-                      margin: '0 0 14px 0',
+                      margin: 0,
                       lineHeight: '1.3'
                     }}>
                       {movie.title}
                     </h3>
 
-                    {/* Ticket Details Info Table */}
+                    {/* Meta Info Grid */}
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: '1fr 1fr',
-                      gap: '10px',
+                      gap: '8px',
                       background: 'rgba(255, 255, 255, 0.03)',
-                      padding: '12px 14px',
+                      padding: '10px 12px',
                       borderRadius: '12px',
                       border: '1px solid rgba(255, 255, 255, 0.06)',
-                      fontSize: '0.82rem',
-                      marginBottom: '14px'
+                      fontSize: '0.78rem'
                     }}>
                       <div>
-                        <div style={{ color: '#888', fontSize: '0.72rem' }}>관람일시 (DATE/TIME)</div>
+                        <div style={{ color: '#888', fontSize: '0.68rem', fontWeight: '700' }}>DATE & TIME</div>
                         <div style={{ color: '#FFF', fontWeight: '800', marginTop: '2px' }}>{viewDate} {viewTime}</div>
                       </div>
                       <div>
-                        <div style={{ color: '#888', fontSize: '0.72rem' }}>상영관 (THEATER)</div>
-                        <div style={{ color: currentTheme.accent, fontWeight: '800', marginTop: '2px' }}>{theater}</div>
+                        <div style={{ color: '#888', fontSize: '0.68rem', fontWeight: '700' }}>THEATER</div>
+                        <div style={{ color: currentTheme.accent, fontWeight: '800', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {theater.split(' ')[0]}
+                        </div>
                       </div>
                       <div>
-                        <div style={{ color: '#888', fontSize: '0.72rem' }}>좌석 (SEAT)</div>
+                        <div style={{ color: '#888', fontSize: '0.68rem', fontWeight: '700' }}>SEAT NO.</div>
                         <div style={{ color: '#FFF', fontWeight: '800', marginTop: '2px' }}>{seat}</div>
                       </div>
                       <div>
-                        <div style={{ color: '#888', fontSize: '0.72rem' }}>나의 별점 (RATING)</div>
+                        <div style={{ color: '#888', fontSize: '0.68rem', fontWeight: '700' }}>MY RATING</div>
                         <div style={{ color: currentTheme.accent, fontWeight: '800', marginTop: '2px' }}>★ {Number(rating).toFixed(1)} / 5.0</div>
                       </div>
                     </div>
 
-                    {/* Memorable Quote Box */}
+                    {/* Memorable Review / Quote Box */}
                     <div style={{
                       background: currentTheme.badgeBg,
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
                       borderRadius: '12px',
                       padding: '12px',
                       color: '#E2E8F0',
-                      fontSize: '0.82rem',
+                      fontSize: '0.8rem',
                       lineHeight: '1.45',
                       fontStyle: 'italic'
                     }}>
                       💬 "{quote}"
                     </div>
-                  </div>
 
-                  {/* Bottom Barcode & Wax Seal Stamp */}
-                  <div>
-                    {/* Barcode SVG Visual */}
+                    {/* Barcode Graphic */}
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       gap: '4px',
-                      borderTop: '1px dashed rgba(255, 255, 255, 0.2)',
-                      paddingTop: '14px',
-                      marginTop: '10px'
+                      marginTop: 'auto'
                     }}>
-                      {/* Realistic Barcode Lines */}
                       <div style={{
                         display: 'flex',
-                        height: '32px',
-                        width: '85%',
+                        height: '28px',
+                        width: '80%',
                         gap: '2px',
                         justifyContent: 'center',
                         opacity: 0.85
                       }}>
-                        {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4].map((w, i) => (
+                        {[2, 1, 3, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2, 1, 3, 2, 4, 1, 3, 2, 4].map((w, i) => (
                           <div key={i} style={{ width: `${w}px`, background: '#FFF', height: '100%' }} />
                         ))}
                       </div>
-                      <span style={{ fontSize: '0.68rem', letterSpacing: '4px', color: '#888', fontWeight: '800' }}>
-                        CNFX • {movie.id} • {viewDate.replace(/\./g, '')}
+                      <span style={{ fontSize: '0.65rem', letterSpacing: '3px', color: '#888', fontWeight: '800' }}>
+                        ORIGINAL • {movie.id} • {ticketNumber}
                       </span>
                     </div>
+                  </div>
+
+                  {/* Bottom Die-Cut Stub Footer */}
+                  <div style={{
+                    height: '42px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderTop: '2px dashed rgba(255, 255, 255, 0.4)',
+                    background: 'rgba(0, 0, 0, 0.65)',
+                    fontSize: '0.68rem',
+                    fontWeight: '900',
+                    color: currentTheme.accent,
+                    letterSpacing: '2px'
+                  }}>
+                    ★ CINEFLIX AUTHENTIC ★
                   </div>
                 </div>
               </div>
@@ -544,7 +718,7 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
                 background: 'rgba(255, 255, 255, 0.08)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 color: '#FFF',
-                padding: '8px 18px',
+                padding: '8px 20px',
                 borderRadius: '12px',
                 fontSize: '0.86rem',
                 fontWeight: '700',
@@ -556,32 +730,33 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
               }}
             >
               <span>🔄</span>
-              <span>{isFlipped ? '앞면(포토) 보기' : '뒷면(티켓 정보) 보기'}</span>
+              <span>{isFlipped ? '앞면(오리지널 아트) 보기' : '뒷면(티켓 인포) 보기'}</span>
             </button>
           </div>
 
           {/* ================= RIGHT: Customizer Controls Panel ================= */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* 1. Photo Selection */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {/* 1. Photo Selection Carousel */}
             <div>
-              <label style={{ fontSize: '0.9rem', fontWeight: '800', color: '#FFF', marginBottom: '8px', display: 'block' }}>
-                📸 포토티켓 이미지 선택
+              <label style={{ fontSize: '0.88rem', fontWeight: '800', color: '#FFF', marginBottom: '8px', display: 'block' }}>
+                📸 오리지널 아트 이미지 선택 ({photoCandidates.length}개)
               </label>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                {photoOptions.map((opt, idx) => (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {photoCandidates.map((opt, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setSelectedPhoto(opt.url)}
                     style={{
                       background: selectedPhoto === opt.url ? currentTheme.badgeBg : 'rgba(255, 255, 255, 0.05)',
-                      border: selectedPhoto === opt.url ? `1px solid ${currentTheme.accent}` : '1px solid rgba(255, 255, 255, 0.1)',
+                      border: selectedPhoto === opt.url ? `1.5px solid ${currentTheme.accent}` : '1px solid rgba(255, 255, 255, 0.1)',
                       color: selectedPhoto === opt.url ? currentTheme.accent : '#CCC',
-                      padding: '8px 14px',
+                      padding: '8px 12px',
                       borderRadius: '10px',
-                      fontSize: '0.84rem',
+                      fontSize: '0.82rem',
                       fontWeight: '700',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
                     }}
                   >
                     {opt.label}
@@ -593,11 +768,11 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
                   onClick={() => fileInputRef.current && fileInputRef.current.click()}
                   style={{
                     background: customPhotoUrl && selectedPhoto === customPhotoUrl ? currentTheme.badgeBg : 'rgba(255, 255, 255, 0.05)',
-                    border: customPhotoUrl && selectedPhoto === customPhotoUrl ? `1px solid ${currentTheme.accent}` : '1px dashed rgba(255, 255, 255, 0.3)',
+                    border: customPhotoUrl && selectedPhoto === customPhotoUrl ? `1.5px solid ${currentTheme.accent}` : '1px dashed rgba(255, 255, 255, 0.3)',
                     color: customPhotoUrl && selectedPhoto === customPhotoUrl ? currentTheme.accent : '#FFF',
-                    padding: '8px 14px',
+                    padding: '8px 12px',
                     borderRadius: '10px',
-                    fontSize: '0.84rem',
+                    fontSize: '0.82rem',
                     fontWeight: '700',
                     cursor: 'pointer',
                     display: 'flex',
@@ -620,15 +795,15 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
 
             {/* 2. Theme Selection */}
             <div>
-              <label style={{ fontSize: '0.9rem', fontWeight: '800', color: '#FFF', marginBottom: '8px', display: 'block' }}>
-                🎨 티켓 테마 스타일
+              <label style={{ fontSize: '0.88rem', fontWeight: '800', color: '#FFF', marginBottom: '8px', display: 'block' }}>
+                🎨 오리지널 티켓 가공 테마
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                 {[
-                  { id: 'gold', label: '골드 VIP', icon: '👑' },
-                  { id: 'classic', label: '클래식 레드', icon: '🎬' },
-                  { id: 'neon', label: '네온 사이버', icon: '⚡' },
-                  { id: 'vintage', label: '빈티지 모노', icon: '🎞️' }
+                  { id: 'gold', label: '골드 포일', icon: '👑' },
+                  { id: 'silver', label: '실버 홀로그램', icon: '✨' },
+                  { id: 'neon', label: '사이버 네온', icon: '⚡' },
+                  { id: 'noir', label: '시네마 느와르', icon: '🎬' }
                 ].map((t) => (
                   <button
                     key={t.id}
@@ -656,16 +831,16 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
               </div>
             </div>
 
-            {/* 3. Ticket Metadata Inputs */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            {/* 3. Ticket Number & Specs Customizer */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                  📅 관람 날짜
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                  🏷️ 티켓 고유 넘버 (NO.)
                 </label>
                 <input
                   type="text"
-                  value={viewDate}
-                  onChange={(e) => setViewDate(e.target.value)}
+                  value={ticketNo}
+                  onChange={(e) => setTicketNo(e.target.value)}
                   style={{
                     width: '100%',
                     background: 'rgba(255, 255, 255, 0.06)',
@@ -680,28 +855,45 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
               </div>
 
               <div>
-                <label style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                  ⏰ 관람 시간
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                  📅 관람 일시
                 </label>
-                <input
-                  type="text"
-                  value={viewTime}
-                  onChange={(e) => setViewTime(e.target.value)}
-                  style={{
-                    width: '100%',
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: '#FFF',
-                    borderRadius: '10px',
-                    padding: '8px 12px',
-                    fontSize: '0.88rem',
-                    boxSizing: 'border-box'
-                  }}
-                />
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <input
+                    type="text"
+                    value={viewDate}
+                    onChange={(e) => setViewDate(e.target.value)}
+                    style={{
+                      flex: 2,
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#FFF',
+                      borderRadius: '10px',
+                      padding: '8px 10px',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <input
+                    type="text"
+                    value={viewTime}
+                    onChange={(e) => setViewTime(e.target.value)}
+                    style={{
+                      flex: 1,
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#FFF',
+                      borderRadius: '10px',
+                      padding: '8px 10px',
+                      fontSize: '0.85rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
                   🏛️ 상영관
                 </label>
                 <input
@@ -715,15 +907,15 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
                     color: '#FFF',
                     borderRadius: '10px',
                     padding: '8px 12px',
-                    fontSize: '0.88rem',
+                    fontSize: '0.85rem',
                     boxSizing: 'border-box'
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                  💺 좌석 번호
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                  💺 좌석
                 </label>
                 <input
                   type="text"
@@ -736,17 +928,17 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
                     color: '#FFF',
                     borderRadius: '10px',
                     padding: '8px 12px',
-                    fontSize: '0.88rem',
+                    fontSize: '0.85rem',
                     boxSizing: 'border-box'
                   }}
                 />
               </div>
             </div>
 
-            {/* 4. Rating & Memorable Quote */}
+            {/* 4. Rating & Quote */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                   ⭐ 나의 별점: <strong style={{ color: 'var(--accent-gold)' }}>★ {Number(rating).toFixed(1)}</strong>
                 </label>
                 <div style={{ display: 'flex', gap: '4px' }}>
@@ -770,7 +962,7 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
                 </div>
               </div>
 
-              <label style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
                 💬 기억에 남는 한줄평 / 명대사
               </label>
               <textarea
@@ -794,7 +986,7 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
             </div>
 
             {/* 5. Action Download & Save Buttons */}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
               <button
                 type="button"
                 onClick={() => handleDownload('current')}
@@ -818,7 +1010,7 @@ export default function PhotoTicketModal({ movie, user, userRating = 5.0, userRe
                 }}
               >
                 <span>📥</span>
-                <span>{downloading ? '티켓 렌더링 중...' : '티켓 이미지 다운로드 (PNG)'}</span>
+                <span>{downloading ? '티켓 렌더링 중...' : '오리지널 티켓 다운로드 (PNG)'}</span>
               </button>
 
               <button
