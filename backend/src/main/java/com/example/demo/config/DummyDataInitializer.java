@@ -3,9 +3,6 @@ package com.example.demo.config;
 import com.example.demo.domain.member.entity.Member;
 import com.example.demo.domain.member.entity.Role;
 import com.example.demo.domain.member.repository.MemberRepository;
-import com.example.demo.domain.playlist.entity.Playlist;
-import com.example.demo.domain.playlist.entity.PlaylistItem;
-import com.example.demo.domain.playlist.repository.PlaylistRepository;
 import com.example.demo.domain.post.entity.Post;
 import com.example.demo.domain.post.repository.PostRepository;
 import com.example.demo.domain.review.entity.Review;
@@ -27,7 +24,6 @@ public class DummyDataInitializer implements CommandLineRunner {
     private final MemberRepository memberRepository;
     private final ReviewRepository reviewRepository;
     private final PostRepository postRepository;
-    private final PlaylistRepository playlistRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -36,7 +32,6 @@ public class DummyDataInitializer implements CommandLineRunner {
         initMembers();
         initReviews();
         initPosts();
-        initPlaylists();
     }
 
     private void initMembers() {
@@ -186,65 +181,5 @@ public class DummyDataInitializer implements CommandLineRunner {
 
         postRepository.saveAll(dummyPosts);
         log.info("[DummyData] 자유 게시판 더미 데이터 {}건 생성 완료!", dummyPosts.size());
-    }
-
-    private void initPlaylists() {
-        if (playlistRepository.count() > 0) {
-            log.info("[DummyData] 플레이리스트 데이터가 이미 존재하여 초기화를 건너뜁니다.");
-            return;
-        }
-
-        log.info("[DummyData] 추천 플레이리스트 더미 데이터 생성을 시작합니다.");
-
-        Playlist p1 = Playlist.builder()
-                .title("🔥 가슴이 웅장해지는 SF & 우주 명작 몰아보기")
-                .description("압도적인 스케일과 우주적 상상력으로 몰입감을 선사하는 SF 영화 컬렉션")
-                .userIdentifier("시네플릭스 공식")
-                .isPublic(true)
-                .build();
-
-        PlaylistItem item1 = PlaylistItem.builder()
-                .playlist(p1)
-                .tmdbMovieId(157336L)
-                .movieTitle("인터스텔라")
-                .posterPath("/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg")
-                .build();
-
-        PlaylistItem item2 = PlaylistItem.builder()
-                .playlist(p1)
-                .tmdbMovieId(27205L)
-                .movieTitle("인셉션")
-                .posterPath("/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg")
-                .build();
-
-        p1.getItems().add(item1);
-        p1.getItems().add(item2);
-
-        Playlist p2 = Playlist.builder()
-                .title("🌿 지친 일상을 위로해주는 힐링 감성 애니메이션")
-                .description("따뜻한 그림체와 가슴 뭉클한 서사로 마음을 채워주는 애니메이션 모음")
-                .userIdentifier("영화보는고양이")
-                .isPublic(true)
-                .build();
-
-        PlaylistItem item3 = PlaylistItem.builder()
-                .playlist(p2)
-                .tmdbMovieId(1022789L)
-                .movieTitle("인사이드 아웃 2")
-                .posterPath("/vpnv9B6vFiGKuUtW1kiuM9mKCjP.jpg")
-                .build();
-
-        PlaylistItem item4 = PlaylistItem.builder()
-                .playlist(p2)
-                .tmdbMovieId(1184918L)
-                .movieTitle("와일드 로봇")
-                .posterPath("/v9L184918.jpg")
-                .build();
-
-        p2.getItems().add(item3);
-        p2.getItems().add(item4);
-
-        playlistRepository.saveAll(List.of(p1, p2));
-        log.info("[DummyData] 추천 플레이리스트 더미 데이터 2건 생성 완료!");
     }
 }
