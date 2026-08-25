@@ -883,7 +883,10 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                   <div
                     key={pl.id}
                     className="glass"
-                    onClick={() => setSelectedMyCollection(pl)}
+                    onClick={() => {
+                      navigate(`/collection/${pl.id}`);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                     style={{
                       borderRadius: '20px',
                       padding: '22px',
@@ -979,7 +982,8 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedMyCollection(pl);
+                            navigate(`/collection/${pl.id}`);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
                           style={{
                             background: 'rgba(255, 255, 255, 0.08)',
@@ -1029,18 +1033,6 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
                 );
               })}
             </div>
-          )}
-
-          {/* Collection Detail Modal */}
-          {selectedMyCollection && (
-            <CollectionDetailModal
-              collection={selectedMyCollection}
-              onClose={() => setSelectedMyCollection(null)}
-              onSelectMovie={(m) => {
-                navigate(`/movie/${m.id}`);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
           )}
         </div>
       )}

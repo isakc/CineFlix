@@ -8,6 +8,7 @@ import TopRatedCategorySection from "./components/TopRatedCategorySection";
 import PublicCollectionSection from "./components/PublicCollectionSection";
 import PlaylistModal from "./components/PlaylistModal";
 import MovieDetailPage from "./pages/MovieDetailPage";
+import CollectionDetailPage from "./pages/CollectionDetailPage";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import MyPage from "./pages/MyPage";
@@ -429,6 +430,17 @@ function AppContent() {
               onLogout={handleLogout}
               userIdentifier={getUserIdentifier()}
               onSelectMovie={handleSelectMovie}
+            />
+          }
+        />
+
+        <Route
+          path="/collection/:id"
+          element={
+            <CollectionDetailPage
+              user={user}
+              wishlists={safeWishlists}
+              onToggleWishlist={handleToggleWishlist}
             />
           }
         />

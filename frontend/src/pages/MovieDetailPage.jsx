@@ -792,7 +792,10 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
               return (
                 <div
                   key={col.id}
-                  onClick={() => setSelectedCollectionModal(col)}
+                  onClick={() => {
+                    navigate(`/collection/${col.id}`);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   className="glass"
                   style={{
                     borderRadius: '20px',
@@ -904,17 +907,6 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
               );
             })}
           </div>
-
-          {selectedCollectionModal && (
-            <CollectionDetailModal
-              collection={selectedCollectionModal}
-              onClose={() => setSelectedCollectionModal(null)}
-              onSelectMovie={(m) => {
-                navigate(`/movie/${m.id}`);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-          )}
         </section>
       )}
 

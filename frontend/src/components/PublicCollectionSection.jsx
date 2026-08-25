@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
-import CollectionDetailModal from './CollectionDetailModal';
 
 export default function PublicCollectionSection({ user, onSelectMovie }) {
   const navigate = useNavigate();
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCollection, setSelectedCollection] = useState(null);
   const [visibleLimit, setVisibleLimit] = useState(4);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -270,7 +268,10 @@ export default function PublicCollectionSection({ user, onSelectMovie }) {
               return (
                 <div
                   key={col.id}
-                  onClick={() => setSelectedCollection(col)}
+                  onClick={() => {
+                    navigate(`/collection/${col.id}`);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   className="glass"
                   style={{
                     borderRadius: '20px',
@@ -475,15 +476,6 @@ export default function PublicCollectionSection({ user, onSelectMovie }) {
             </div>
           )}
         </>
-      )}
-
-      {/* Collection Full View Modal */}
-      {selectedCollection && (
-        <CollectionDetailModal
-          collection={selectedCollection}
-          onClose={() => setSelectedCollection(null)}
-          onSelectMovie={onSelectMovie}
-        />
       )}
     </section>
   );
