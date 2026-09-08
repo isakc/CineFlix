@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
 import StarRatingInput from '../components/StarRatingInput';
-import PhotoTicketModal from '../components/PhotoTicketModal';
 
 const DEFAULT_BLANK_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24"><rect width="100%" height="100%" fill="%231A1B26"/><circle cx="12" cy="8" r="4" fill="%23787C99"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" fill="%23787C99"/></svg>`;
 
@@ -17,7 +16,6 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
   const [trailers, setTrailers] = useState([]);
   const [containingPlaylists, setContainingPlaylists] = useState([]);
   const [selectedCollectionModal, setSelectedCollectionModal] = useState(null);
-  const [showPhotoTicketModal, setShowPhotoTicketModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Review Form
@@ -588,38 +586,6 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
               >
                 <span>📁</span>
                 <span>내 컬렉션에 담기</span>
-              </button>
-
-              <button
-                onClick={() => setShowPhotoTicketModal(true)}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 184, 0, 0.2), rgba(255, 140, 0, 0.2))',
-                  color: 'var(--accent-gold)',
-                  border: '1px solid var(--accent-gold)',
-                  borderRadius: '16px',
-                  padding: '12px 22px',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  fontSize: '0.95rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 14px rgba(255, 184, 0, 0.2)',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--accent-gold)';
-                  e.currentTarget.style.color = '#000';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 184, 0, 0.2), rgba(255, 140, 0, 0.2))';
-                  e.currentTarget.style.color = 'var(--accent-gold)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <span>🎫</span>
-                <span>포토티켓 만들기</span>
               </button>
 
               {addMessage && (
@@ -1632,19 +1598,6 @@ export default function MovieDetailPage({ user, userIdentifier, onOpenAuth }) {
           </div>
         );
       })()}
-
-      {/* Photo Ticket Generator Modal */}
-      {showPhotoTicketModal && movie && (
-        <PhotoTicketModal
-          movie={movie}
-          user={user}
-          userRating={rating}
-          userReview={content}
-          stills={galleryPhotos}
-          castList={castList}
-          onClose={() => setShowPhotoTicketModal(false)}
-        />
-      )}
     </div>
   );
 }

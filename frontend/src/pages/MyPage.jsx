@@ -14,13 +14,6 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
   const [myReviews, setMyReviews] = useState([]);
   const [myPlaylists, setMyPlaylists] = useState([]);
   const [myWishlists, setMyWishlists] = useState([]);
-  const [myTickets, setMyTickets] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('cineflix_photo_tickets') || '[]');
-    } catch {
-      return [];
-    }
-  });
   const [loading, setLoading] = useState(true);
 
   // Collection Create & Modal States
@@ -267,15 +260,6 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
     }
   };
 
-  // Handle Delete Saved Photo Ticket
-  const handleDeleteTicket = (e, ticketId) => {
-    e.stopPropagation();
-    if (!window.confirm('정말로 이 포토티켓을 삭제하시겠습니까?')) return;
-    const updated = myTickets.filter((t) => t.id !== ticketId);
-    setMyTickets(updated);
-    localStorage.setItem('cineflix_photo_tickets', JSON.stringify(updated));
-  };
-
   if (!user) return null;
 
   // Calculate Average Rating
@@ -409,22 +393,6 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>위시리스트</div>
           </div>
-
-          <div
-            style={{
-              background: 'rgba(255, 184, 0, 0.08)',
-              padding: '12px 20px',
-              borderRadius: '16px',
-              textAlign: 'center',
-              minWidth: '90px',
-              border: '1px solid rgba(255, 184, 0, 0.25)'
-            }}
-          >
-            <div style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--accent-gold)' }}>
-              {myTickets.length}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--accent-gold)', fontWeight: '700' }}>포토티켓</div>
-          </div>
         </div>
       </div>
 
@@ -497,26 +465,6 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
         >
           <span>❤️</span>
           <span>위시리스트 ({myWishlists.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('tickets')}
-          style={{
-            padding: '10px 22px',
-            borderRadius: '12px',
-            border: 'none',
-            background: activeTab === 'tickets' ? 'linear-gradient(135deg, #FFB800, #FF8C00)' : 'rgba(255, 255, 255, 0.05)',
-            color: activeTab === 'tickets' ? '#000' : '#fff',
-            fontWeight: '800',
-            fontSize: '0.95rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <span>🎫</span>
-          <span>포토티켓 북 ({myTickets.length})</span>
         </button>
 
         <button
@@ -1187,222 +1135,7 @@ export default function MyPage({ user, onUpdateUser, onLogout, userIdentifier, o
         </div>
       )}
 
-      {/* TAB 4: My Photo Ticket Book */}
-      {activeTab === 'tickets' && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🎫</span>
-                <span>나의 시네마 포토티켓 북 ({myTickets.length})</span>
-              </h2>
-              <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                내가 직접 디자인하고 간직한 소중한 영화 관람 티켓 컬렉션입니다.
-              </span>
-            </div>
-
-            <Link
-              to="/"
-              style={{
-                background: 'linear-gradient(135deg, #FFB800, #FF8C00)',
-                color: '#000',
-                textDecoration: 'none',
-                padding: '10px 20px',
-                borderRadius: '14px',
-                fontWeight: '800',
-                fontSize: '0.9rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 14px rgba(255, 184, 0, 0.35)'
-              }}
-            >
-              <span>🍿</span>
-              <span>새 티켓 제작하러 가기</span>
-            </Link>
-          </div>
-
-          {myTickets.length === 0 ? (
-            <div
-              className="glass"
-              style={{
-                textAlign: 'center',
-                padding: '70px 20px',
-                borderRadius: '20px',
-                border: '1px dashed rgba(255, 255, 255, 0.15)'
-              }}
-            >
-              <div style={{ fontSize: '3.5rem', marginBottom: '16px' }}>🎫</div>
-              <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#fff', marginBottom: '8px' }}>
-                아직 보관된 포토티켓이 없습니다
-              </h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '24px', maxWidth: '420px', margin: '0 auto 24px auto', lineHeight: '1.5' }}>
-                영화 상세 페이지에서 [🎫 포토티켓 만들기] 버튼을 눌러 나만의 멋진 감상 티켓을 만들어보세요!
-              </p>
-              <Link to="/" className="btn-primary" style={{ textDecoration: 'none', padding: '12px 28px', fontWeight: '800' }}>
-                영화 구경하러 가기 ➔
-              </Link>
-            </div>
-          ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
-                gap: '28px'
-              }}
-            >
-              {myTickets.map((t) => (
-                <div
-                  key={t.id}
-                  className="glass"
-                  style={{
-                    borderRadius: '22px',
-                    padding: '20px',
-                    border: '1px solid rgba(255, 193, 7, 0.25)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '16px',
-                    background: 'linear-gradient(145deg, rgba(25, 25, 35, 0.95), rgba(12, 12, 18, 0.98))',
-                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
-                    position: 'relative'
-                  }}
-                >
-                  {/* Ticket Visual Card Preview */}
-                  <div
-                    style={{
-                      width: '100%',
-                      height: '380px',
-                      borderRadius: '16px',
-                      overflow: 'hidden',
-                      position: 'relative',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-                      background: '#0B0C10',
-                      border: '1px solid rgba(255, 255, 255, 0.12)'
-                    }}
-                  >
-                    <img
-                      src={t.photoUrl || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop'}
-                      alt={t.movieTitle}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop';
-                      }}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 35%, rgba(0,0,0,0.85) 100%)'
-                      }}
-                    />
-                    {/* ✂️ Top Die-Cut Stamp Holes */}
-                    <div style={{ position: 'absolute', top: '-8px', left: 0, right: 0, display: 'flex', justifyContent: 'space-between', padding: '0 6px', zIndex: 10 }}>
-                      {[...Array(10)].map((_, i) => (
-                        <div key={i} style={{ width: '13px', height: '13px', borderRadius: '50%', background: '#191923' }} />
-                      ))}
-                    </div>
-
-                    {/* ✂️ Bottom Die-Cut Stamp Holes */}
-                    <div style={{ position: 'absolute', bottom: '-8px', left: 0, right: 0, display: 'flex', justifyContent: 'space-between', padding: '0 6px', zIndex: 10 }}>
-                      {[...Array(10)].map((_, i) => (
-                        <div key={i} style={{ width: '13px', height: '13px', borderRadius: '50%', background: '#191923' }} />
-                      ))}
-                    </div>
-
-                    {/* Top Header */}
-                    <div style={{ position: 'absolute', top: '12px', left: '14px', right: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(255,255,255,0.3)', paddingBottom: '8px' }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: '900', color: '#FFF', letterSpacing: '1px' }}>
-                        ● ORIGINAL TICKET ●
-                      </span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', background: 'rgba(0,0,0,0.6)', padding: '2px 8px', borderRadius: '6px', fontWeight: '800' }}>
-                        {t.ticketNo || `★ ${Number(t.rating).toFixed(1)}`}
-                      </span>
-                    </div>
-
-                    {/* Bottom Info */}
-                    <div style={{ position: 'absolute', bottom: '14px', left: '14px', right: '14px' }}>
-                      <h4 style={{ fontSize: '1.15rem', fontWeight: '900', color: '#FFF', margin: '0 0 4px 0', textShadow: '0 2px 6px rgba(0,0,0,0.8)' }}>
-                        {t.movieTitle}
-                      </h4>
-                      <div style={{ fontSize: '0.75rem', color: '#CCC', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>{t.viewDate}</span>
-                        <span style={{ color: 'var(--accent-gold)', fontWeight: '700' }}>{t.theater.split(' ')[0]}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quote Snippet */}
-                  {t.quote && (
-                    <div style={{
-                      width: '100%',
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      padding: '10px 14px',
-                      borderRadius: '12px',
-                      fontSize: '0.82rem',
-                      color: '#E2E8F0',
-                      fontStyle: 'italic',
-                      lineHeight: '1.4',
-                      boxSizing: 'border-box',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}>
-                      💬 "{t.quote}"
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'space-between' }}>
-                    {t.movieId && (
-                      <button
-                        onClick={() => navigate(`/movie/${t.movieId}`)}
-                        style={{
-                          flex: 1,
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          color: '#FFF',
-                          padding: '8px',
-                          borderRadius: '10px',
-                          fontSize: '0.82rem',
-                          fontWeight: '700',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        🎬 영화 상세
-                      </button>
-                    )}
-
-                    <button
-                      onClick={(e) => handleDeleteTicket(e, t.id)}
-                      style={{
-                        background: 'rgba(229, 9, 20, 0.15)',
-                        border: '1px solid rgba(229, 9, 20, 0.3)',
-                        color: '#FF6B6B',
-                        padding: '8px 14px',
-                        borderRadius: '10px',
-                        fontSize: '0.82rem',
-                        fontWeight: '700',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      🗑️ 삭제
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 5: Profile & Security Settings */}
+      {/* TAB 4: Profile & Security Settings */}
       {activeTab === 'settings' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
           {/* Change Nickname Card */}
