@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiUrl } from '../config/api';
+import SocialLoginButtons from '../components/SocialLoginButtons';
 
 export default function SignupPage({ onAuthSuccess }) {
   const navigate = useNavigate();
@@ -455,6 +456,8 @@ export default function SignupPage({ onAuthSuccess }) {
           >
             {loading ? '가입 처리 중...' : (isEmailVerified ? '✨ 무료 회원가입 완료하기' : '🔒 이메일 인증 후 가입 가능')}
           </button>
+
+          <SocialLoginButtons />
         </form>
 
         {/* Footer Link to Login */}

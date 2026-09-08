@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiUrl } from '../config/api';
+import SocialLoginButtons from '../components/SocialLoginButtons';
 
 export default function LoginPage({ onAuthSuccess }) {
   const navigate = useNavigate();
@@ -166,6 +167,8 @@ export default function LoginPage({ onAuthSuccess }) {
           >
             {loading ? '로그인 중...' : '🔑 로그인하기'}
           </button>
+
+          <SocialLoginButtons />
         </form>
 
         {/* Footer Link to Signup */}

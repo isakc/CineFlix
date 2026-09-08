@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { apiUrl } from '../config/api';
+import SocialLoginButtons from './SocialLoginButtons';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -121,6 +122,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           <button type="submit" className="btn-primary" style={{ marginTop: '10px' }} disabled={loading}>
             {loading ? '처리 중...' : (isLogin ? '로그인하기' : '가입완료 및 로그인')}
           </button>
+
+          <SocialLoginButtons />
         </form>
       </div>
     </div>

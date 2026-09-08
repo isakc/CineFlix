@@ -1,5 +1,7 @@
 package com.example.demo.config.security;
 
+import com.example.demo.config.security.oauth2.CustomOAuth2UserService;
+import com.example.demo.config.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +27,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -39,13 +43,17 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/reviews/**", "/api/wishlists/**", "/api/news/**", "/api/playlists/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/wishlists/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
                         .anyRequest().permitAll()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 

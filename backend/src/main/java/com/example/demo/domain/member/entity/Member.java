@@ -30,12 +30,21 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AuthProvider provider;
+
+    @Column(length = 100)
+    private String providerId;
+
     @Builder
-    public Member(String email, String password, String nickname, Role role) {
+    public Member(String email, String password, String nickname, Role role, AuthProvider provider, String providerId) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.role = role != null ? role : Role.ROLE_USER;
+        this.provider = provider != null ? provider : AuthProvider.LOCAL;
+        this.providerId = providerId;
     }
 
     public void updateNickname(String nickname) {
@@ -44,5 +53,14 @@ public class Member extends BaseTimeEntity {
 
     public void updatePassword(String password) {
         this.password = password;
+    }
+
+    public void updateSocialInfo(String nickname, String providerId) {
+        if (nickname != null && !nickname.isBlank()) {
+            this.nickname = nickname;
+        }
+        if (providerId != null) {
+            this.providerId = providerId;
+        }
     }
 }

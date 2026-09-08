@@ -12,6 +12,7 @@ import CollectionDetailPage from "./pages/CollectionDetailPage";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import MyPage from "./pages/MyPage";
+import OAuth2RedirectHandler from "./pages/OAuth2RedirectHandler";
 import { apiUrl } from "./config/api";
 
 function AppContent() {
@@ -443,6 +444,11 @@ function AppContent() {
               onToggleWishlist={handleToggleWishlist}
             />
           }
+        />
+
+        <Route
+          path="/oauth2/redirect"
+          element={<OAuth2RedirectHandler onAuthSuccess={handleAuthSuccess} />}
         />
       </Routes>
 
