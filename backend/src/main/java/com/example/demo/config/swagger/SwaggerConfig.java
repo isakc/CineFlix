@@ -34,7 +34,7 @@ public class SwaggerConfig {
                 .contact(new Contact().name("CineFlix Dev Team").email("developer@cineflix.com"));
 
         Server localServer = new Server().url("http://localhost:8080").description("로컬 개발 서버");
-        Server cloudServer = new Server().url("https://cineflix-vm8l.onrender.com").description("Render 클라우드 서버");
+        Server cloudServer = new Server().url("https://cineflix-backend.onrender.com").description("Render 클라우드 서버");
 
         return new OpenAPI()
                 .info(info)
