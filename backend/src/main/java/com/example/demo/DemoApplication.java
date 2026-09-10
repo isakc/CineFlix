@@ -12,7 +12,29 @@ public class DemoApplication {
 
 	public static void main(String[] args) {
 		loadDotEnv();
+		cleanOAuthEnvProperties();
 		SpringApplication.run(DemoApplication.class, args);
+	}
+
+	private static void cleanOAuthEnvProperties() {
+		String[] keys = {
+				"GOOGLE_CLIENT_ID",
+				"GOOGLE_CLIENT_SECRET",
+				"NAVER_CLIENT_ID",
+				"NAVER_CLIENT_SECRET",
+				"FRONTEND_OAUTH2_REDIRECT_URI"
+		};
+		for (String key : keys) {
+			String val = System.getenv(key);
+			if (val != null) {
+				val = val.trim();
+				if ((val.startsWith("\"") && val.endsWith("\"")) ||
+					(val.startsWith("'") && val.endsWith("'"))) {
+					val = val.substring(1, val.length() - 1).trim();
+				}
+				System.setProperty(key, val);
+			}
+		}
 	}
 
 	private static void loadDotEnv() {
