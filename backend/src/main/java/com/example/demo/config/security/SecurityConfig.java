@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/login/oauth2/**", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/reviews/**", "/api/wishlists/**", "/api/news/**", "/api/playlists/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/wishlists/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
