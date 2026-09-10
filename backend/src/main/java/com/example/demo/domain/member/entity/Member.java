@@ -31,8 +31,8 @@ public class Member extends BaseTimeEntity {
     private Role role;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private AuthProvider provider;
+    @Column(length = 20)
+    private AuthProvider provider = AuthProvider.LOCAL;
 
     @Column(length = 100)
     private String providerId;
@@ -62,5 +62,9 @@ public class Member extends BaseTimeEntity {
         if (providerId != null) {
             this.providerId = providerId;
         }
+    }
+
+    public AuthProvider getProvider() {
+        return provider != null ? provider : AuthProvider.LOCAL;
     }
 }
