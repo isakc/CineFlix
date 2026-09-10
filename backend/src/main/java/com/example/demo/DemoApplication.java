@@ -26,13 +26,23 @@ public class DemoApplication {
 		};
 		for (String key : keys) {
 			String val = System.getenv(key);
+			if (val == null || val.isBlank()) {
+				val = System.getenv(key.toLowerCase());
+			}
+			if (val == null || val.isBlank()) {
+				val = System.getProperty(key);
+			}
 			if (val != null) {
-				val = val.trim();
-				if ((val.startsWith("\"") && val.endsWith("\"")) ||
-					(val.startsWith("'") && val.endsWith("'"))) {
+				val = val.replaceAll("[\\r\\n\\t\\u200B\\uFEFF]", "").trim();
+				while ((val.startsWith("\"") && val.endsWith("\"")) ||
+						(val.startsWith("'") && val.endsWith("'"))) {
 					val = val.substring(1, val.length() - 1).trim();
 				}
 				System.setProperty(key, val);
+				String masked = val.length() > 8 ? val.substring(0, 4) + "***" + val.substring(val.length() - 4) : "***";
+				System.out.println("[OAuth2 Init] " + key + " set: len=" + val.length() + ", val=" + masked);
+			} else {
+				System.out.println("[OAuth2 Init] " + key + " is NOT set (will use fallback default)");
 			}
 		}
 	}

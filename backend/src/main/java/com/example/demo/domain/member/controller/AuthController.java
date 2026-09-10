@@ -82,4 +82,59 @@ public class AuthController {
         authService.updatePassword(authentication.getName(), request);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "OAuth 환경변수 설정 상태 확인 (디버깅용)", description = "OAuth 환경변수 로드 상태를 마스킹하여 반환합니다.")
+    @GetMapping("/oauth-status")
+    public ResponseEntity<java.util.Map<String, Object>> oauthStatus() {
+        java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+
+        String gId = getResolvedEnv("GOOGLE_CLIENT_ID");
+        String gSecret = getResolvedEnv("GOOGLE_CLIENT_SECRET");
+        String nId = getResolvedEnv("NAVER_CLIENT_ID");
+        String nSecret = getResolvedEnv("NAVER_CLIENT_SECRET");
+        String redirectUri = getResolvedEnv("FRONTEND_OAUTH2_REDIRECT_URI");
+
+        map.put("status", "UP");
+        map.put("buildVersion", "2026-09-10-post-method");
+
+        map.put("googleClientId", maskValue(gId));
+        map.put("googleClientIdLength", gId != null ? gId.length() : 0);
+
+        java.util.Map<String, Object> gSecretMap = new java.util.LinkedHashMap<>();
+        gSecretMap.put("configured", gSecret != null && !gSecret.isBlank());
+        gSecretMap.put("isDummy", "dummy-google-client-secret".equals(gSecret));
+        gSecretMap.put("length", gSecret != null ? gSecret.length() : 0);
+        gSecretMap.put("prefix", gSecret != null && gSecret.length() >= 7 ? gSecret.substring(0, 7) : "N/A");
+        gSecretMap.put("suffix", gSecret != null && gSecret.length() >= 4 ? gSecret.substring(gSecret.length() - 4) : "N/A");
+        map.put("googleClientSecret", gSecretMap);
+
+        map.put("naverClientId", maskValue(nId));
+        map.put("naverClientIdLength", nId != null ? nId.length() : 0);
+
+        java.util.Map<String, Object> nSecretMap = new java.util.LinkedHashMap<>();
+        nSecretMap.put("configured", nSecret != null && !nSecret.isBlank());
+        nSecretMap.put("isDummy", "dummy-naver-client-secret".equals(nSecret));
+        nSecretMap.put("length", nSecret != null ? nSecret.length() : 0);
+        nSecretMap.put("prefix", nSecret != null && nSecret.length() >= 2 ? nSecret.substring(0, 2) : "N/A");
+        nSecretMap.put("suffix", nSecret != null && nSecret.length() >= 2 ? nSecret.substring(nSecret.length() - 2) : "N/A");
+        map.put("naverClientSecret", nSecretMap);
+
+        map.put("frontendOAuth2RedirectUri", redirectUri);
+
+        return ResponseEntity.ok(map);
+    }
+
+    private String getResolvedEnv(String key) {
+        String val = System.getProperty(key);
+        if (val == null || val.isBlank()) {
+            val = System.getenv(key);
+        }
+        return val;
+    }
+
+    private String maskValue(String val) {
+        if (val == null || val.isBlank()) return "null";
+        if (val.length() <= 8) return val.substring(0, 2) + "***";
+        return val.substring(0, 6) + "..." + val.substring(val.length() - 4);
+    }
 }
