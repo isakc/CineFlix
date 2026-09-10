@@ -5,13 +5,17 @@ export default function OAuth2RedirectHandler({ onAuthSuccess }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
+  const processedRef = React.useRef(false);
 
   useEffect(() => {
+    if (processedRef.current) return;
+
     const token = searchParams.get('token');
     const email = searchParams.get('email');
     const nickname = searchParams.get('nickname');
 
     if (token) {
+      processedRef.current = true;
       const decodedEmail = email ? decodeURIComponent(email) : '';
       const decodedNickname = nickname ? decodeURIComponent(nickname) : (decodedEmail.split('@')[0] || 'Member');
 
@@ -27,11 +31,10 @@ export default function OAuth2RedirectHandler({ onAuthSuccess }) {
         if (onAuthSuccess) {
           onAuthSuccess(userData);
         }
-        // Redirect to main home after brief smooth delay
-        const timer = setTimeout(() => {
-          navigate('/', { replace: true });
-        }, 800);
-        return () => clearTimeout(timer);
+        // Smooth transition to main home
+        setTimeout(() => {
+          window.location.replace('/');
+        }, 500);
       } catch (err) {
         console.error('Failed to save user auth session:', err);
         setError('로그인 정보를 저장하는 중 오류가 발생했습니다.');
@@ -40,7 +43,7 @@ export default function OAuth2RedirectHandler({ onAuthSuccess }) {
       const errorMsg = searchParams.get('error') || '소셜 인증에 실패했습니다.';
       setError(decodeURIComponent(errorMsg));
     }
-  }, [searchParams, onAuthSuccess, navigate]);
+  }, [searchParams]);
 
   return (
     <div
