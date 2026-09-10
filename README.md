@@ -10,9 +10,7 @@ CineFlix는 **Spring Boot 백엔드**와 **React(Vite) 프론트엔드**를 기�
 | 구성 요소 | 배포 플랫폼 | 접속 URL |
 |:---|:---|:---|
 | **Frontend** | Vercel (Edge CDN) | [![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel)](https://cineflix-nine-ruddy.vercel.app) `https://cineflix-nine-ruddy.vercel.app` |
-| **Backend API** | Render (Docker) | [![Render](https://img.shields.io/badge/Render-Live-46E3B7?logo=render)](https://cineflix-vm8l.onrender.com) `https://cineflix-vm8l.onrender.com` |
 | **API Docs (Swagger)** | OpenAPI 3.0 / Swagger | `https://cineflix-vm8l.onrender.com/swagger-ui/index.html` |
-| **OAuth Status** | Diagnostic API | `https://cineflix-vm8l.onrender.com/api/auth/oauth-status` |
 | **Docker Hub** | Docker Multi-stage | `https://hub.docker.com/r/shape15/cineflix-backend` |
 
 ---
@@ -117,53 +115,4 @@ CineFlix/
 │   ├── vercel.json                    # Vercel SPA Rewrite 라우팅 설정
 │   └── package.json
 └── README.md                          # 프로젝트 종합 가이드 문서
-```
-
----
-
-## ⚙️ 환경변수 설정 가이드 (Environment Variables)
-
-로컬 실행 시 루트 디렉터리의 `.env` 파일에, 클라우드(Render / Vercel) 배포 시 대시보드 환경변수에 등록합니다:
-
-| 환경변수명 | 필수 여부 | 설명 | 예시 값 |
-|:---|:---:|:---|:---|
-| `TMDB_API_KEY` | 필수 | TMDB v3 API Key | `335d351f...` |
-| `KOBIS_API_KEY` | 필수 | 영진위 오픈 API Key | `183da6c4...` |
-| `JWT_SECRET` | 필수 | JWT 서명용 비밀키 (32자 이상) | `cineflix_secret_jwt_key...` |
-| `SPRING_MAIL_HOST` | 선택 | SMTP 메일 호스트 | `smtp.gmail.com` |
-| `SPRING_MAIL_PORT` | 선택 | SMTP 포트 | `587` |
-| `SPRING_MAIL_USERNAME` | 필수(인증) | 구글 계정 이메일 | `example@gmail.com` |
-| `SPRING_MAIL_PASSWORD` | 필수(인증) | 구글 앱 비밀번호 (16자리) | `abcd efgh ijkl mnop` |
-| `GOOGLE_CLIENT_ID` | 필수(소셜) | Google OAuth 2.0 클라이언트 ID | `3595...apps.googleusercontent.com` |
-| `GOOGLE_CLIENT_SECRET` | 필수(소셜) | Google OAuth 2.0 보안 비밀번호 | `GOCSPX-...` |
-| `NAVER_CLIENT_ID` | 필수(소셜) | Naver Developers 클라이언트 ID | `rgCEqb...` |
-| `NAVER_CLIENT_SECRET` | 필수(소셜) | Naver Developers Client Secret | `j1NkW...` |
-| `FRONTEND_OAUTH2_REDIRECT_URI` | 필수(소셜) | 로그인 완료 후 복귀할 프론트엔드 주소 | `https://cineflix-nine-ruddy.vercel.app/oauth2/redirect` |
-
----
-
-## 🚀 로컬 개발 환경 실행 방법 (Getting Started)
-
-### 1. Repository 클론
-```bash
-git clone https://github.com/isakc/CineFlix.git
-cd CineFlix
-```
-
-### 2. 백엔드 실행 (Spring Boot)
-```bash
-cd backend
-./gradlew bootRun
-# 백엔드가 http://localhost:8080 에서 구동됩니다.
-# H2 Console: http://localhost:8080/h2-console
-# Swagger UI: http://localhost:8080/swagger-ui/index.html
-# OAuth Status: http://localhost:8080/api/auth/oauth-status
-```
-
-### 3. 프론트엔드 실행 (React Vite)
-```bash
-cd ../frontend
-npm install
-npm run dev
-# 프론트엔드가 http://localhost:3000 에서 구동됩니다.
 ```
